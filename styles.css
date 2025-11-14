@@ -1,0 +1,30 @@
+/* Custom CSS for the Game Archive */
+
+/* Enhance the card appearance */
+.game-card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    height: 100%; /* Important for equal height cards */
+    display: flex;
+    flex-direction: column;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.game-card .card-body {
+    flex-grow: 1; /* Allows body to take up available space */
+}
+
+/* Style for the badge tags */
+.badge-tag {
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-weight: normal;
+}
+
+/* Ensure modal buttons are clearly linked */
+#gameDetailModal .modal-footer a.btn {
+    min-width: 150px;
+}

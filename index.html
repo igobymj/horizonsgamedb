@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archived Student Games Database</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="bg-dark text-white p-4 mb-4 shadow">
+        <div class="container">
+            <h1 class="display-5"><i class="fas fa-gamepad me-2"></i>Indiecade Horizons Student Game Archive</h1>
+            <p class="lead">A curated collection of student-made video games and interactive projects.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="mb-5 p-4 rounded bg-light border">
+            <h2 class="h4 mb-3">Find a Game</h2>
+            <form id="search-form" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search-title" class="form-label">Title / Keyword</label>
+                    <input type="text" class="form-control" id="search-title" placeholder="Search title or keywords">
+                </div>
+                <div class="col-md-3">
+                    <label for="search-creator" class="form-label">Creator Name</label>
+                    <input type="text" class="form-control" id="search-creator" placeholder="E.g., Alex Chen">
+                </div>
+                <div class="col-md-2">
+                    <label for="filter-institution" class="form-label">Institution</label>
+                    <select class="form-select" id="filter-institution">
+                        <option value="">All Institutions</option>
+                        <option value="UCLA">UCLA</option>
+                        <option value="NYU">NYU</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filter-genre" class="form-label">Genre</label>
+                    <select class="form-select" id="filter-genre">
+                        <option value="">All Genres</option>
+                        <option value="Platformer">Platformer</option>
+                        <option value="Puzzle">Puzzle</option>
+                        <option value="Narrative">Narrative</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Search</button>
+                </div>
+            </form>
+        </section>
+
+        <section>
+            <h2 class="h4 mb-4">Game Results (<span id="result-count">0</span>)</h2>
+            <div id="game-results" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                </div>
+            <div id="no-results" class="alert alert-warning mt-4 d-none" role="alert">
+                No games match your search criteria. Try a broader search!
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-light text-center p-3 mt-5 border-top">
+        <p class="mb-0">&copy; 2025 Student Game Archive. Powered by open source projects.</p>
+    </footer>
+
+    <div class="modal fade" id="gameDetailModal" tabindex="-1" aria-labelledby="gameDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gameDetailModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-details">
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="modal-video-link" href="#" target="_blank" class="btn btn-danger me-auto"><i class="fab fa-youtube"></i> Watch Trailer</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a id="modal-download-link" href="#" target="_blank" class="btn btn-success"><i class="fas fa-download"></i> Download Game</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>
