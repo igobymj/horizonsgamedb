@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Student Game Archive</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="bg-dark text-white p-4 mb-4 shadow">
+        <div class="container">
+            <h1 class="display-5">
+                <a href="index.html" class="text-white text-decoration-none">
+                    <i class="fas fa-gamepad me-2"></i>Student Game Archive
+                </a>
+            </h1>
+            <p class="lead">Login to upload games</p>
+        </div>
+    </header>
+
+    <main class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-4 text-center"><i class="fas fa-user-circle me-2"></i>Account Access</h2>
+                        
+                        <!-- Tab Navigation -->
+                        <ul class="nav nav-tabs mb-4" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="login-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#login-panel" type="button">Login</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="signup-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#signup-panel" type="button">Sign Up</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Login Panel -->
+                            <div class="tab-pane fade show active" id="login-panel">
+                                <form id="login-form">
+                                    <div class="mb-3">
+                                        <label for="login-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="login-email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="login-password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="login-password" required>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary" id="login-btn">
+                                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Sign Up Panel -->
+                            <div class="tab-pane fade" id="signup-panel">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-user-lock fa-3x text-muted mb-3"></i>
+                                    <h5 class="mb-3">Account Registration Closed</h5>
+                                    <p class="text-muted mb-4">
+                                        New account registration is currently restricted. 
+                                        If you need upload access, please contact MJ for login credentials.
+                                    </p>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-envelope me-2"></i>
+                                        <strong>Contact:</strong> Reach out to MJ to request access
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages -->
+                        <div id="auth-message" class="alert mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <a href="index.html" class="text-muted">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Archive
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-light text-center p-3 mt-5 border-top">
+        <p class="mb-0">&copy; 2025 Student Game Archive. Powered by open source projects.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

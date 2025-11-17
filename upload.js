@@ -4,6 +4,31 @@ const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
+// perform supabase built in authentication check
+async function checkAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+        // Not logged in, redirect to login page
+        window.location.href = 'login.html?redirect=upload.html';
+        return false;
+    }
+    return true;
+}
+
+// Add logout functionality
+function setupLogout() {
+    // Create logout button in header
+    const header = document.querySelector('header .container');
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'btn btn-sm btn-outline-light float-end';
+    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt me-2"></i>Logout';
+    logoutBtn.onclick = async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+    };
+    header.querySelector('h1').appendChild(logoutBtn);
+}
+
 // Storage for tags and compressed images
 let creators = [];
 let keywords = [];
@@ -260,8 +285,13 @@ function showError(message) {
 
 // ===== INITIALIZE =====
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Set current year as default
+document.addEventListener('DOMContentLoaded', async () => {
+     // Check auth first
+    const isAuthenticated = await checkAuth();
+    if (!isAuthenticated) return;
+    
+    // Setup logout button
+    setupLogout();   // Set current year as default
     const currentYear = new Date().getFullYear();
     document.getElementById('year').value = currentYear;
     
