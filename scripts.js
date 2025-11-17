@@ -16,17 +16,42 @@ const gameDetailModal = new bootstrap.Modal(document.getElementById('gameDetailM
 async function fetchGames() {
     resultsContainer.innerHTML = '<p class="text-center">Loading archive...</p>';
     
-    // Select all columns from the 'games' table
-    const { data, error } = await supabaseClient
-        .from('games') 
-        .select('*');
+    try {
+        const { data, error } = await supabaseClient
+            .from('games') 
+            .select('*');
 
-    if (error) {
+        if (error) throw error;
+        
+        allGames = data;
+        renderGames(allGames);
+        
+    } catch (error) {
         console.error('Error fetching games:', error);
-        resultsContainer.innerHTML = '<p class="text-danger text-center">Failed to load games database.</p>';
-    } else {
-        allGames = data; // Store data in our global variable
-        renderGames(allGames); // Draw the screen
+        
+        // Create error message container
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger text-center';
+        errorDiv.setAttribute('role', 'alert');
+        
+        const heading = document.createElement('h5');
+        heading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Unable to load games';
+        
+        const message = document.createElement('p');
+        message.className = 'mb-2';
+        message.textContent = error.message || 'Database connection failed';
+        
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn btn-sm btn-outline-danger';
+        retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
+        retryBtn.onclick = fetchGames;
+        
+        errorDiv.appendChild(heading);
+        errorDiv.appendChild(message);
+        errorDiv.appendChild(retryBtn);
+        
+        resultsContainer.innerHTML = '';
+        resultsContainer.appendChild(errorDiv);
     }
 }
 
@@ -45,30 +70,64 @@ function renderGames(games) {
     games.forEach(game => {
         // Note: Ensure your Database column names match these variables
         // or update these variables to match your database columns.
-        const cardHtml = `
-            <div class="col">
-                <div class="card game-card shadow-sm">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title text-primary">${game.gameTitle}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">${game.gameGenre} (${game.year})</h6>
-                        <p class="card-text mb-1"><strong>Institution:</strong> ${game.institution}</p>
-                        
-                        <p class="card-text"><strong>Creators:</strong> ${(game.creators || []).join(', ')}</p>
-                        
-                        <div class="mt-2 mb-3">
-                            ${(game.keywords || []).map(kw => `<span class="badge bg-secondary badge-tag">${kw}</span>`).join('')}
-                        </div>
-                        <div class="mt-auto">
-                             <button class="btn btn-sm btn-outline-info w-100" onclick="showGameDetails(${game.id})">
-                                <i class="fas fa-info-circle"></i> Details
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        resultsContainer.innerHTML += cardHtml;
+       // Create card container
+        const col = document.createElement('div');
+        col.className = 'col';
+        
+        const card = document.createElement('div');
+        card.className = 'card game-card shadow-sm';
+        
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body d-flex flex-column';
+        
+        // Title (safe)
+        const title = document.createElement('h5');
+        title.className = 'card-title text-primary';
+        title.textContent = game.gameTitle;
+        
+        // Subtitle (safe)
+        const subtitle = document.createElement('h6');
+        subtitle.className = 'card-subtitle mb-2 text-muted';
+        subtitle.textContent = `${game.gameGenre} (${game.year})`;
+        
+        // Institution
+        const institution = document.createElement('p');
+        institution.className = 'card-text mb-1';
+        institution.innerHTML = '<strong>Institution:</strong> ';
+        institution.appendChild(document.createTextNode(game.institution));
+        
+        // Creators
+        const creators = document.createElement('p');
+        creators.className = 'card-text';
+        creators.innerHTML = '<strong>Creators:</strong> ';
+        creators.appendChild(document.createTextNode((game.creators || []).join(', ')));
+        
+        // Keywords (badges)
+        const keywordDiv = document.createElement('div');
+        keywordDiv.className = 'mt-2 mb-3';
+        (game.keywords || []).forEach(kw => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-secondary badge-tag';
+            badge.textContent = kw; // Safe!
+            keywordDiv.appendChild(badge);
+        });
+        
+        // Button
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'mt-auto';
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-outline-info w-100';
+        btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
+        btn.onclick = () => showGameDetails(game.id);
+        btnContainer.appendChild(btn);
+        
+        // Assemble everything
+        cardBody.append(title, subtitle, institution, creators, keywordDiv, btnContainer);
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        resultsContainer.appendChild(col);
     });
+ 
 }
 
 // 4. Search Logic (Updates to search the 'allGames' variable)
@@ -105,66 +164,154 @@ window.showGameDetails = function(gameId) {
     document.getElementById('gameDetailModalLabel').textContent = game.gameTitle;
     const modalDetails = document.getElementById('modal-details');
     
-    // Image Carousel Logic 
-    // (Assumes game.image_urls is an array in Supabase)
-    let imageHtml = '';
-    const images = game.image_urls || []; // Safe fallback
+    // Clear previous content
+    modalDetails.innerHTML = '';
+    
+    // === IMAGE CAROUSEL SECTION ===
+    const images = game.image_urls || [];
     
     if (images.length > 0) {
         if (images.length === 1) {
-            imageHtml = `
-                <div class="text-center mb-4">
-                    <img src="${images[0]}" class="img-fluid rounded shadow" style="max-height: 200px; object-fit: contain;">
-                </div>`;
+            // Single image
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'text-center mb-4';
+            
+            const img = document.createElement('img');
+            img.src = images[0];
+            img.className = 'img-fluid rounded shadow';
+            img.style.maxHeight = '200px';
+            img.style.objectFit = 'contain';
+            
+            imgContainer.appendChild(img);
+            modalDetails.appendChild(imgContainer);
         } else {
-            // ... (Your existing carousel logic fits here, just use 'images' variable) ...
-             const carouselId = `carousel-${game.id}`;
-            const carouselIndicators = images.map((_, index) => `
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" ${index === 0 ? 'class="active" aria-current="true"' : ''}></button>
-            `).join('');
-            const carouselItems = images.map((imgSrc, index) => `
-                <div class="carousel-item ${index === 0 ? 'active' : ''}">
-                    <img src="${imgSrc}" class="d-block w-100 rounded">
-                </div>
-            `).join('');
-
-            imageHtml = `
-                <div id="${carouselId}" class="carousel slide mb-4" data-bs-ride="carousel">
-                    <div class="carousel-indicators">${carouselIndicators}</div>
-                    <div class="carousel-inner rounded shadow-sm">${carouselItems}</div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    </button>
-                </div>
-            `;
+            // Multiple images - carousel
+            const carouselId = `carousel-${game.id}`;
+            const carousel = document.createElement('div');
+            carousel.id = carouselId;
+            carousel.className = 'carousel slide mb-4';
+            carousel.setAttribute('data-bs-ride', 'carousel');
+            
+            // Indicators
+            const indicators = document.createElement('div');
+            indicators.className = 'carousel-indicators';
+            images.forEach((_, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.setAttribute('data-bs-target', `#${carouselId}`);
+                button.setAttribute('data-bs-slide-to', index);
+                if (index === 0) {
+                    button.className = 'active';
+                    button.setAttribute('aria-current', 'true');
+                }
+                indicators.appendChild(button);
+            });
+            
+            // Carousel items
+            const carouselInner = document.createElement('div');
+            carouselInner.className = 'carousel-inner rounded shadow-sm';
+            images.forEach((imgSrc, index) => {
+                const item = document.createElement('div');
+                item.className = index === 0 ? 'carousel-item active' : 'carousel-item';
+                
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.className = 'd-block w-100 rounded';
+                
+                item.appendChild(img);
+                carouselInner.appendChild(item);
+            });
+            
+            // Carousel controls
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'carousel-control-prev';
+            prevBtn.type = 'button';
+            prevBtn.setAttribute('data-bs-target', `#${carouselId}`);
+            prevBtn.setAttribute('data-bs-slide', 'prev');
+            prevBtn.innerHTML = '<span class="carousel-control-prev-icon" aria-hidden="true"></span>';
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'carousel-control-next';
+            nextBtn.type = 'button';
+            nextBtn.setAttribute('data-bs-target', `#${carouselId}`);
+            nextBtn.setAttribute('data-bs-slide', 'next');
+            nextBtn.innerHTML = '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
+            
+            // Assemble carousel
+            carousel.appendChild(indicators);
+            carousel.appendChild(carouselInner);
+            carousel.appendChild(prevBtn);
+            carousel.appendChild(nextBtn);
+            modalDetails.appendChild(carousel);
         }
     }
-
-    modalDetails.innerHTML = `
-        ${imageHtml}
-        <p class="lead text-primary mb-3">${game.gameGenre} (${game.year})</p>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <p><strong>Institution:</strong> ${game.institution}</p>
-                <p><strong>Creators:</strong> ${(game.creators || []).join(', ')}</p>
-            </div>
-            <div class="col-md-6 mb-3">
-                <p><strong>Keywords:</strong> ${(game.keywords || []).map(kw => `<span class="badge bg-info badge-tag">${kw}</span>`).join('')}</p>
-            </div>
-        </div>
-        <h6 class="mt-3 text-success"><i class="fas fa-paint-brush"></i> Artists' Statement</h6>
-        <p class="border-start border-3 border-success ps-3">${game.description || 'No statement provided.'}</p>
-    `;
-
-    // Update Links
+    
+    // === GENRE AND YEAR ===
+    const genreText = document.createElement('p');
+    genreText.className = 'lead text-primary mb-3';
+    genreText.textContent = `${game.gameGenre} (${game.year})`;
+    modalDetails.appendChild(genreText);
+    
+    // === INFO ROW ===
+    const row = document.createElement('div');
+    row.className = 'row';
+    
+    // Left column
+    const colLeft = document.createElement('div');
+    colLeft.className = 'col-md-6 mb-3';
+    
+    const institutionP = document.createElement('p');
+    institutionP.innerHTML = '<strong>Institution:</strong> ';
+    institutionP.appendChild(document.createTextNode(game.institution));
+    
+    const creatorsP = document.createElement('p');
+    creatorsP.innerHTML = '<strong>Creators:</strong> ';
+    creatorsP.appendChild(document.createTextNode((game.creators || []).join(', ')));
+    
+    colLeft.appendChild(institutionP);
+    colLeft.appendChild(creatorsP);
+    
+    // Right column
+    const colRight = document.createElement('div');
+    colRight.className = 'col-md-6 mb-3';
+    
+    const keywordsP = document.createElement('p');
+    keywordsP.innerHTML = '<strong>Keywords:</strong> ';
+    (game.keywords || []).forEach(kw => {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-info badge-tag';
+        badge.textContent = kw;
+        keywordsP.appendChild(badge);
+    });
+    
+    colRight.appendChild(keywordsP);
+    
+    row.appendChild(colLeft);
+    row.appendChild(colRight);
+    modalDetails.appendChild(row);
+    
+    // === ARTIST STATEMENT ===
+    const statementHeading = document.createElement('h6');
+    statementHeading.className = 'mt-3 text-success';
+    statementHeading.innerHTML = '<i class="fas fa-paint-brush"></i> Artists\' Statement';
+    
+    const statementText = document.createElement('p');
+    statementText.className = 'border-start border-3 border-success ps-3';
+    statementText.textContent = game.description || 'No statement provided.';
+    
+    modalDetails.appendChild(statementHeading);
+    modalDetails.appendChild(statementText);
+    
+    // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
     vidLink.href = game.videoLink || '#';
     vidLink.classList.toggle('disabled', !game.videoLink);
 
-    // Update Source Link (Dynamic creation)
+    const downloadLink = document.getElementById('modal-download-link');
+    downloadLink.href = game.downloadLink || '#';
+    downloadLink.classList.toggle('disabled', !game.downloadLink);
+
+    // Source link (dynamic creation)
     const footer = document.querySelector('#gameDetailModal .modal-footer');
     let sourceBtn = document.getElementById('modal-source-link-temp');
     if (!sourceBtn) {
@@ -172,6 +319,7 @@ window.showGameDetails = function(gameId) {
         sourceBtn.id = 'modal-source-link-temp';
         sourceBtn.className = 'btn btn-outline-dark me-2';
         sourceBtn.innerHTML = '<i class="fas fa-code"></i> Source';
+        sourceBtn.target = '_blank';
         footer.insertBefore(sourceBtn, document.getElementById('modal-download-link'));
     }
     sourceBtn.href = game.repoLink || '#';
@@ -179,6 +327,88 @@ window.showGameDetails = function(gameId) {
 
     gameDetailModal.show();
 }
+
+// window.showGameDetails = function(gameId) {
+//     const game = allGames.find(g => g.id === gameId);
+//     if (!game) return;
+
+//     document.getElementById('gameDetailModalLabel').textContent = game.gameTitle;
+//     const modalDetails = document.getElementById('modal-details');
+    
+//     // Image Carousel Logic 
+//     // (Assumes game.image_urls is an array in Supabase)
+//     let imageHtml = '';
+//     const images = game.image_urls || []; // Safe fallback
+    
+//     if (images.length > 0) {
+//         if (images.length === 1) {
+//             imageHtml = `
+//                 <div class="text-center mb-4">
+//                     <img src="${images[0]}" class="img-fluid rounded shadow" style="max-height: 200px; object-fit: contain;">
+//                 </div>`;
+//         } else {
+//             // ... (Your existing carousel logic fits here, just use 'images' variable) ...
+//              const carouselId = `carousel-${game.id}`;
+//             const carouselIndicators = images.map((_, index) => `
+//                 <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" ${index === 0 ? 'class="active" aria-current="true"' : ''}></button>
+//             `).join('');
+//             const carouselItems = images.map((imgSrc, index) => `
+//                 <div class="carousel-item ${index === 0 ? 'active' : ''}">
+//                     <img src="${imgSrc}" class="d-block w-100 rounded">
+//                 </div>
+//             `).join('');
+
+//             imageHtml = `
+//                 <div id="${carouselId}" class="carousel slide mb-4" data-bs-ride="carousel">
+//                     <div class="carousel-indicators">${carouselIndicators}</div>
+//                     <div class="carousel-inner rounded shadow-sm">${carouselItems}</div>
+//                     <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+//                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+//                     </button>
+//                     <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+//                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
+//                     </button>
+//                 </div>
+//             `;
+//         }
+//     }
+
+//     modalDetails.innerHTML = `
+//         ${imageHtml}
+//         <p class="lead text-primary mb-3">${game.gameGenre} (${game.year})</p>
+//         <div class="row">
+//             <div class="col-md-6 mb-3">
+//                 <p><strong>Institution:</strong> ${game.institution}</p>
+//                 <p><strong>Creators:</strong> ${(game.creators || []).join(', ')}</p>
+//             </div>
+//             <div class="col-md-6 mb-3">
+//                 <p><strong>Keywords:</strong> ${(game.keywords || []).map(kw => `<span class="badge bg-info badge-tag">${kw}</span>`).join('')}</p>
+//             </div>
+//         </div>
+//         <h6 class="mt-3 text-success"><i class="fas fa-paint-brush"></i> Artists' Statement</h6>
+//         <p class="border-start border-3 border-success ps-3">${game.description || 'No statement provided.'}</p>
+//     `;
+
+//     // Update Links
+//     const vidLink = document.getElementById('modal-video-link');
+//     vidLink.href = game.videoLink || '#';
+//     vidLink.classList.toggle('disabled', !game.videoLink);
+
+//     // Update Source Link (Dynamic creation)
+//     const footer = document.querySelector('#gameDetailModal .modal-footer');
+//     let sourceBtn = document.getElementById('modal-source-link-temp');
+//     if (!sourceBtn) {
+//         sourceBtn = document.createElement('a');
+//         sourceBtn.id = 'modal-source-link-temp';
+//         sourceBtn.className = 'btn btn-outline-dark me-2';
+//         sourceBtn.innerHTML = '<i class="fas fa-code"></i> Source';
+//         footer.insertBefore(sourceBtn, document.getElementById('modal-download-link'));
+//     }
+//     sourceBtn.href = game.repoLink || '#';
+//     sourceBtn.classList.toggle('disabled', !game.repoLink);
+
+//     gameDetailModal.show();
+// }
 
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {
