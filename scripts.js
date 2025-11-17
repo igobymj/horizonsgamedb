@@ -106,9 +106,9 @@ window.showGameDetails = function(gameId) {
     const modalDetails = document.getElementById('modal-details');
     
     // Image Carousel Logic 
-    // (Assumes game.imageUrls is an array in Supabase)
+    // (Assumes game.image_urls is an array in Supabase)
     let imageHtml = '';
-    const images = game.imageURLs || []; // Safe fallback
+    const images = game.image_urls || []; // Safe fallback
     
     if (images.length > 0) {
         if (images.length === 1) {
