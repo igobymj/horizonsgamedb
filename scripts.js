@@ -179,7 +179,7 @@ window.showGameDetails = function(gameId) {
             const img = document.createElement('img');
             img.src = images[0];
             img.className = 'img-fluid rounded shadow';
-            img.style.maxHeight = '200px';
+            img.style.maxHeight = '480px';
             img.style.objectFit = 'contain';
             
             imgContainer.appendChild(img);
@@ -217,6 +217,8 @@ window.showGameDetails = function(gameId) {
                 const img = document.createElement('img');
                 img.src = imgSrc;
                 img.className = 'd-block w-100 rounded';
+                img.style.maxHeight = '480px';
+                img.style.objectFit = 'contain';
                 
                 item.appendChild(img);
                 carouselInner.appendChild(item);
@@ -327,88 +329,6 @@ window.showGameDetails = function(gameId) {
 
     gameDetailModal.show();
 }
-
-// window.showGameDetails = function(gameId) {
-//     const game = allGames.find(g => g.id === gameId);
-//     if (!game) return;
-
-//     document.getElementById('gameDetailModalLabel').textContent = game.gameTitle;
-//     const modalDetails = document.getElementById('modal-details');
-    
-//     // Image Carousel Logic 
-//     // (Assumes game.image_urls is an array in Supabase)
-//     let imageHtml = '';
-//     const images = game.image_urls || []; // Safe fallback
-    
-//     if (images.length > 0) {
-//         if (images.length === 1) {
-//             imageHtml = `
-//                 <div class="text-center mb-4">
-//                     <img src="${images[0]}" class="img-fluid rounded shadow" style="max-height: 200px; object-fit: contain;">
-//                 </div>`;
-//         } else {
-//             // ... (Your existing carousel logic fits here, just use 'images' variable) ...
-//              const carouselId = `carousel-${game.id}`;
-//             const carouselIndicators = images.map((_, index) => `
-//                 <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" ${index === 0 ? 'class="active" aria-current="true"' : ''}></button>
-//             `).join('');
-//             const carouselItems = images.map((imgSrc, index) => `
-//                 <div class="carousel-item ${index === 0 ? 'active' : ''}">
-//                     <img src="${imgSrc}" class="d-block w-100 rounded">
-//                 </div>
-//             `).join('');
-
-//             imageHtml = `
-//                 <div id="${carouselId}" class="carousel slide mb-4" data-bs-ride="carousel">
-//                     <div class="carousel-indicators">${carouselIndicators}</div>
-//                     <div class="carousel-inner rounded shadow-sm">${carouselItems}</div>
-//                     <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
-//                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-//                     </button>
-//                     <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
-//                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
-//                     </button>
-//                 </div>
-//             `;
-//         }
-//     }
-
-//     modalDetails.innerHTML = `
-//         ${imageHtml}
-//         <p class="lead text-primary mb-3">${game.gameGenre} (${game.year})</p>
-//         <div class="row">
-//             <div class="col-md-6 mb-3">
-//                 <p><strong>Institution:</strong> ${game.institution}</p>
-//                 <p><strong>Creators:</strong> ${(game.creators || []).join(', ')}</p>
-//             </div>
-//             <div class="col-md-6 mb-3">
-//                 <p><strong>Keywords:</strong> ${(game.keywords || []).map(kw => `<span class="badge bg-info badge-tag">${kw}</span>`).join('')}</p>
-//             </div>
-//         </div>
-//         <h6 class="mt-3 text-success"><i class="fas fa-paint-brush"></i> Artists' Statement</h6>
-//         <p class="border-start border-3 border-success ps-3">${game.description || 'No statement provided.'}</p>
-//     `;
-
-//     // Update Links
-//     const vidLink = document.getElementById('modal-video-link');
-//     vidLink.href = game.videoLink || '#';
-//     vidLink.classList.toggle('disabled', !game.videoLink);
-
-//     // Update Source Link (Dynamic creation)
-//     const footer = document.querySelector('#gameDetailModal .modal-footer');
-//     let sourceBtn = document.getElementById('modal-source-link-temp');
-//     if (!sourceBtn) {
-//         sourceBtn = document.createElement('a');
-//         sourceBtn.id = 'modal-source-link-temp';
-//         sourceBtn.className = 'btn btn-outline-dark me-2';
-//         sourceBtn.innerHTML = '<i class="fas fa-code"></i> Source';
-//         footer.insertBefore(sourceBtn, document.getElementById('modal-download-link'));
-//     }
-//     sourceBtn.href = game.repoLink || '#';
-//     sourceBtn.classList.toggle('disabled', !game.repoLink);
-
-//     gameDetailModal.show();
-// }
 
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {
