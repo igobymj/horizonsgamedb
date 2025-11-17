@@ -327,6 +327,80 @@ window.showGameDetails = function(gameId) {
     sourceBtn.href = game.repoLink || '#';
     sourceBtn.classList.toggle('disabled', !game.repoLink);
 
+    // Add delete button for authenticated users (at the end of showGameDetails function)
+    async function addDeleteButton(gameId) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const footer = document.querySelector('#gameDetailModal .modal-footer');
+        
+        // Remove existing delete button if any
+        const existingDeleteBtn = document.getElementById('modal-delete-btn');
+        if (existingDeleteBtn) {
+            existingDeleteBtn.remove();
+        }
+        
+        if (session) {
+            // User is authenticated, show delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.id = 'modal-delete-btn';
+            deleteBtn.className = 'btn btn-danger me-auto';
+            deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Game';
+            deleteBtn.onclick = () => confirmDelete(gameId);
+            
+            // Insert at the beginning of footer
+            footer.insertBefore(deleteBtn, footer.firstChild);
+        }
+    }
+
+    async function confirmDelete(gameId) {
+        if (!confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
+            return;
+        }
+        
+        const game = allGames.find(g => g.id === gameId);
+        if (!game) return;
+        
+        try {
+            // Step 1: Delete images from storage
+            if (game.image_urls && game.image_urls.length > 0) {
+                for (const imageUrl of game.image_urls) {
+                    // Extract filename from URL
+                    const urlParts = imageUrl.split('/');
+                    const filename = urlParts[urlParts.length - 1];
+                    
+                    const { error: storageError } = await supabaseClient.storage
+                        .from('game-images')
+                        .remove([filename]);
+                    
+                    if (storageError) {
+                        console.error('Error deleting image:', storageError);
+                    }
+                }
+            }
+            
+            // Step 2: Delete game record from database
+            const { error: dbError } = await supabaseClient
+                .from('games')
+                .delete()
+                .eq('id', gameId);
+            
+            if (dbError) throw dbError;
+            
+            // Step 3: Update UI
+            allGames = allGames.filter(g => g.id !== gameId);
+            renderGames(allGames);
+            
+            // Close modal and show success
+            gameDetailModal.hide();
+            alert('Game deleted successfully!');
+            
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete game: ' + error.message);
+        }
+    }
+
+    addDeleteButton(game.id);
+
     gameDetailModal.show();
 }
 

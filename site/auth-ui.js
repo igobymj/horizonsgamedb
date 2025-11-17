@@ -10,11 +10,10 @@ async function setupAuthUI() {
         // User is logged in - show floating upload button
         const uploadBtn = document.createElement('a');
         uploadBtn.href = 'upload.html';
-        uploadBtn.className = 'btn btn-success btn-lg rounded-circle position-fixed shadow';
-        uploadBtn.style.cssText = 'bottom: 20px; right: 20px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1000;';
-        uploadBtn.title = 'Upload Game';
-        uploadBtn.innerHTML = '<i class="fas fa-upload fa-lg"></i>';
-        
+        uploadBtn.className = 'btn btn-success btn-lg position-fixed shadow';
+        uploadBtn.style.cssText = 'bottom: 30px; right: 30px; z-index: 1000; font-size: 1.1rem; padding: 15px 25px;';
+        uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload Game';
+             
         container.appendChild(uploadBtn);
         
         // Also add a small logout link in header
