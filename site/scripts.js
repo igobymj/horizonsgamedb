@@ -299,44 +299,54 @@ const modalDetails = document.getElementById('modal-details');
         }
     }
     
+    // === GAME INFO SECTION ===
+
+    // Create two-column layout
+    const infoRow = document.createElement('div');
+    infoRow.className = 'row';
+
+    // LEFT COLUMN - Game metadata
+    const leftCol = document.createElement('div');
+    leftCol.className = 'col-md-6';
+
     // Creators
     const creatorsP = document.createElement('p');
     creatorsP.className = 'mb-1';
     creatorsP.innerHTML = '<strong>Creators:</strong> ';
     creatorsP.appendChild(document.createTextNode((game.creators || []).join(', ')));
-    modalDetails.appendChild(creatorsP);
+    leftCol.appendChild(creatorsP);
 
     // Add whitespace
     const spacer1 = document.createElement('div');
     spacer1.className = 'mb-3';
-    modalDetails.appendChild(spacer1);
+    leftCol.appendChild(spacer1);
 
     // Institution
     const institutionH6 = document.createElement('h6');
     institutionH6.className = 'text-muted mb-2';
     institutionH6.textContent = game.institution;
-    modalDetails.appendChild(institutionH6);
+    leftCol.appendChild(institutionH6);
 
     // Class Number • Term Year
     const classTermP = document.createElement('p');
     classTermP.className = 'text-muted mb-1';
     const classText = game.classNumber ? `${game.classNumber} • ` : '';
     classTermP.textContent = `${classText}${game.term} ${game.year}`;
-    modalDetails.appendChild(classTermP);
+    leftCol.appendChild(classTermP);
 
     // Instructors
     const instructorsH6 = document.createElement('h6');
     instructorsH6.className = 'text-muted mb-3';
     instructorsH6.innerHTML = '<strong>Instructor(s):</strong> ';
     instructorsH6.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
-    modalDetails.appendChild(instructorsH6);
+    leftCol.appendChild(instructorsH6);
 
-    // Genre (if you want to keep it somewhere)
+    // Genre
     const genreP = document.createElement('p');
     genreP.className = 'mb-2';
     genreP.innerHTML = '<strong>Genre:</strong> ';
     genreP.appendChild(document.createTextNode(game.gameGenre));
-    modalDetails.appendChild(genreP);
+    leftCol.appendChild(genreP);
 
     // Keywords
     const keywordsP = document.createElement('p');
@@ -348,25 +358,40 @@ const modalDetails = document.getElementById('modal-details');
         badge.textContent = kw;
         keywordsP.appendChild(badge);
     });
-    modalDetails.appendChild(keywordsP);
+    leftCol.appendChild(keywordsP);
 
-    // === ARTIST STATEMENT ===
+    // RIGHT COLUMN - Artist's Statement
+    const rightCol = document.createElement('div');
+    rightCol.className = 'col-md-6';
+
     const statementHeading = document.createElement('h6');
-    statementHeading.className = 'mt-3 text-success';
+    statementHeading.className = 'text-success mb-2';
     statementHeading.innerHTML = '<i class="fas fa-paint-brush"></i> Artists\' Statement';
 
     const statementText = document.createElement('p');
     statementText.className = 'border-start border-3 border-success ps-3';
     statementText.textContent = game.description || 'No statement provided.';
 
-    modalDetails.appendChild(statementHeading);
-    modalDetails.appendChild(statementText);
-    
+    rightCol.appendChild(statementHeading);
+    rightCol.appendChild(statementText);
+
+    // Assemble columns
+    infoRow.appendChild(leftCol);
+    infoRow.appendChild(rightCol);
+    modalDetails.appendChild(infoRow);
     
     // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
-    vidLink.href = game.videoLink || '#';
-    vidLink.classList.toggle('disabled', !game.videoLink);
+    if (game.videoLink) {
+        vidLink.onclick = (e) => {
+            e.preventDefault();
+            showVideoOverlay(game.videoLink);
+        };
+        vidLink.classList.remove('disabled');
+    } else {
+        vidLink.onclick = null;
+        vidLink.classList.add('disabled');
+    }
 
     const downloadLink = document.getElementById('modal-download-link');
     downloadLink.href = game.downloadLink || '#';
@@ -484,6 +509,47 @@ function showImageOverlay(imageSrc) {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         document.getElementById('image-overlay').style.display = 'none';
+    }
+});
+
+// Video overlay functionality
+function showVideoOverlay(videoUrl) {
+    const overlay = document.getElementById('video-overlay');
+    const videoFrame = document.getElementById('overlay-video');
+    
+    // Convert YouTube URL to embed format if needed
+    let embedUrl = videoUrl;
+    if (videoUrl.includes('youtube.com/watch')) {
+        const videoId = new URL(videoUrl).searchParams.get('v');
+        embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    } else if (videoUrl.includes('youtu.be/')) {
+        const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    } else if (videoUrl.includes('vimeo.com/')) {
+        const videoId = videoUrl.split('vimeo.com/')[1].split('?')[0];
+        embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+    }
+    
+    videoFrame.src = embedUrl;
+    overlay.style.display = 'block';
+    
+    // Close on click (but not on the video itself)
+    overlay.onclick = (e) => {
+        if (e.target === overlay || e.target.classList.contains('video-overlay-close')) {
+            overlay.style.display = 'none';
+            videoFrame.src = ''; // Stop video when closing
+        }
+    };
+}
+
+// Also handle ESC key to close video overlay
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const videoOverlay = document.getElementById('video-overlay');
+        if (videoOverlay.style.display === 'block') {
+            videoOverlay.style.display = 'none';
+            document.getElementById('overlay-video').src = '';
+        }
     }
 });
 
