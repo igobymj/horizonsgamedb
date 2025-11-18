@@ -137,6 +137,21 @@
                                 </select>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="classNumber" class="form-label">Class Number</label>
+                                <input type="text" class="form-control" id="classNumber" placeholder="e.g., CS 101, GAME 250">
+                                <small class="text-muted">Optional: Course code or number</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Instructor(s)</label>
+                                <div class="tag-input-container" id="instructors-container">
+                                    <input type="text" id="instructors-input" placeholder="Type name and press Enter" 
+                                        style="border: none; outline: none; flex: 1; min-width: 150px;">
+                                </div>
+                                <small class="text-muted">Press Enter after each instructor name</small>
+                            </div>
+
                             <!-- Creators (Tag Input) -->
                             <div class="mb-3">
                                 <label class="form-label">Creators <span class="text-danger">*</span></label>

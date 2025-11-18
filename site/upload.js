@@ -29,6 +29,7 @@ function setupLogout() {
 // Storage for tags and compressed images
 let creators = [];
 let keywords = [];
+let instructors = [];
 let compressedImages = [];
 
 // ===== TAG INPUT FUNCTIONALITY =====
@@ -233,6 +234,8 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             year: parseInt(document.getElementById('year').value),
             term: document.getElementById('term').value,  // ADD THIS LINE
             institution: document.getElementById('institution').value,
+            instructors: instructors,
+            classNumber: document.getElementById('classNumber').value.trim() || null,
             creators: creators,
             keywords: keywords,
             description: document.getElementById('description').value.trim() || null,
@@ -294,6 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('year').value = currentYear;
     
     // Setup tag inputs
+    setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
     setupTagInput('keywords-input', 'keywords-container', keywords);
 });
