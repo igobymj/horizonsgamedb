@@ -64,66 +64,105 @@ function renderGames(games) {
         noResultsAlert.classList.add('d-none');
     }
 
-    games.forEach(game => {
-        // Note: Ensure your Database column names match these variables
-        // or update these variables to match your database columns.
-       // Create card container
-        const col = document.createElement('div');
-        col.className = 'col';
+ games.forEach(game => {
+    // Create card container
+    const col = document.createElement('div');
+    col.className = 'col';
+    
+    const card = document.createElement('div');
+    card.className = 'card game-card shadow-sm';
+    
+    const cardBody = document.createElement('div');
+    cardBody.className = 'card-body d-flex flex-column';
+    
+    // Create a flex container for title/creators + image
+    const headerRow = document.createElement('div');
+    headerRow.className = 'd-flex justify-content-between align-items-start mb-3';
+    
+    // Left side: title and creators
+    const leftContent = document.createElement('div');
+    leftContent.className = 'flex-grow-1 me-3';
+    
+    // Title
+    const title = document.createElement('h5');
+    title.className = 'card-title text-primary mb-2';
+    title.textContent = game.gameTitle;
+    
+    // Creators
+    const creators = document.createElement('p');
+    creators.className = 'card-text mb-3';  // mb-3 for extra space
+    creators.innerHTML = '<strong>Creators:</strong> ';
+    creators.appendChild(document.createTextNode((game.creators || []).join(', ')));
+    
+    leftContent.appendChild(title);
+    leftContent.appendChild(creators);
+    
+    // Right side: thumbnail image (if available)
+    if (game.image_urls && game.image_urls.length > 0) {
+        const thumbnailBtn = document.createElement('button');
+        thumbnailBtn.className = 'border-0 bg-transparent p-0';
+        thumbnailBtn.style.cursor = 'pointer';
+        thumbnailBtn.onclick = () => showGameDetails(game.id);
         
-        const card = document.createElement('div');
-        card.className = 'card game-card shadow-sm';
+        const thumbnail = document.createElement('img');
+        thumbnail.src = game.image_urls[0];
+        thumbnail.alt = game.gameTitle;
+        thumbnail.className = 'rounded';
+        thumbnail.style.cssText = 'width: 120px; height: 120px; object-fit: cover; transition: opacity 0.2s;';
         
-        const cardBody = document.createElement('div');
-        cardBody.className = 'card-body d-flex flex-column';
+        // Hover effect
+        thumbnailBtn.onmouseenter = () => thumbnail.style.opacity = '0.8';
+        thumbnailBtn.onmouseleave = () => thumbnail.style.opacity = '1';
         
-        // Title (safe)
-        const title = document.createElement('h5');
-        title.className = 'card-title text-primary';
-        title.textContent = game.gameTitle;
-        
-        // Subtitle (safe)
-        const subtitle = document.createElement('h6');
-        subtitle.className = 'card-subtitle mb-2 text-muted';
-        subtitle.textContent = `${game.gameGenre} • ${game.term} ${game.year}`;
-        
-        // Institution
-        const institution = document.createElement('p');
-        institution.className = 'card-text mb-1';
-        institution.innerHTML = '<strong>Institution:</strong> ';
-        institution.appendChild(document.createTextNode(game.institution));
-        
-        // Creators
-        const creators = document.createElement('p');
-        creators.className = 'card-text';
-        creators.innerHTML = '<strong>Creators:</strong> ';
-        creators.appendChild(document.createTextNode((game.creators || []).join(', ')));
-        
-        // Keywords (badges)
-        const keywordDiv = document.createElement('div');
-        keywordDiv.className = 'mt-2 mb-3';
-        (game.keywords || []).forEach(kw => {
-            const badge = document.createElement('span');
-            badge.className = 'badge bg-secondary badge-tag';
-            badge.textContent = kw; // Safe!
-            keywordDiv.appendChild(badge);
-        });
-        
-        // Button
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'mt-auto';
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-sm btn-outline-info w-100';
-        btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
-        btn.onclick = () => showGameDetails(game.id);
-        btnContainer.appendChild(btn);
-        
-        // Assemble everything
-        cardBody.append(title, subtitle, institution, creators, keywordDiv, btnContainer);
-        card.appendChild(cardBody);
-        col.appendChild(card);
-        resultsContainer.appendChild(col);
+        thumbnailBtn.appendChild(thumbnail);
+        headerRow.appendChild(leftContent);
+        headerRow.appendChild(thumbnailBtn);
+    } else {
+        headerRow.appendChild(leftContent);
+    }
+    
+    // Institution (no label)
+    const institution = document.createElement('h6');
+    institution.className = 'card-subtitle mb-2 text-muted';
+    institution.textContent = game.institution;
+    
+    // Class Number • Term Year
+    const classTermYear = document.createElement('p');
+    classTermYear.className = 'card-text mb-1 text-muted';
+    const classText = game.classNumber ? `${game.classNumber} • ` : '';
+    classTermYear.textContent = `${classText}${game.term} ${game.year}`;
+    
+    // Instructors
+    const instructors = document.createElement('h6');
+    instructors.className = 'card-subtitle mb-2 text-muted';
+    instructors.innerHTML = '<strong>Instructor(s):</strong> ';
+    instructors.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
+    
+    // Keywords (badges)
+    const keywordDiv = document.createElement('div');
+    keywordDiv.className = 'mt-2 mb-3';
+    (game.keywords || []).forEach(kw => {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-secondary badge-tag';
+        badge.textContent = kw;
+        keywordDiv.appendChild(badge);
     });
+    
+    // Button
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'mt-auto';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-info w-100';
+    btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
+    btn.onclick = () => showGameDetails(game.id);
+    btnContainer.appendChild(btn);
+    
+    // Assemble everything
+    cardBody.append(headerRow, institution, classTermYear, instructors, keywordDiv, btnContainer);
+    card.appendChild(cardBody);
+    col.appendChild(card);
+    resultsContainer.appendChild(col);
+});
  
 }
 
@@ -158,15 +197,18 @@ window.showGameDetails = function(gameId) {
     const game = allGames.find(g => g.id === gameId);
     if (!game) return;
 
-    document.getElementById('gameDetailModalLabel').textContent = game.gameTitle;
-    const modalDetails = document.getElementById('modal-details');
+const modalTitleElement = document.getElementById('gameDetailModalLabel');
+modalTitleElement.textContent = game.gameTitle;
+modalTitleElement.className = 'modal-title fs-3 fw-bold';  // ADD THIS LINE
+
+const modalDetails = document.getElementById('modal-details');
     
     // Clear previous content
     modalDetails.innerHTML = '';
     
     // === IMAGE CAROUSEL SECTION ===
     const images = game.image_urls || [];
-    
+
     if (images.length > 0) {
         if (images.length === 1) {
             // Single image
@@ -176,9 +218,14 @@ window.showGameDetails = function(gameId) {
             const img = document.createElement('img');
             img.src = images[0];
             img.className = 'img-fluid rounded shadow';
-            img.style.maxHeight = '480px';
+            img.style.maxHeight = '240px';  // Half of 480px
             img.style.objectFit = 'contain';
-            
+            img.style.cursor = 'pointer';
+            img.title = 'Click to view full size';
+            img.onclick = (e) => {
+                e.stopPropagation();  // Prevent carousel from triggering
+                showImageOverlay(images[0]);
+            };            
             imgContainer.appendChild(img);
             modalDetails.appendChild(imgContainer);
         } else {
@@ -188,6 +235,8 @@ window.showGameDetails = function(gameId) {
             carousel.id = carouselId;
             carousel.className = 'carousel slide mb-4';
             carousel.setAttribute('data-bs-ride', 'carousel');
+            carousel.style.maxWidth = '600px';  // Constrain carousel width
+            carousel.style.margin = '0 auto';    // Center it
             
             // Indicators
             const indicators = document.createElement('div');
@@ -214,9 +263,14 @@ window.showGameDetails = function(gameId) {
                 const img = document.createElement('img');
                 img.src = imgSrc;
                 img.className = 'd-block w-100 rounded';
-                img.style.maxHeight = '480px';
+                img.style.maxHeight = '240px';  // Half of 480px
                 img.style.objectFit = 'contain';
-                
+                img.style.cursor = 'pointer';
+                img.title = 'Click to view full size';
+                img.onclick = (e) => {
+                    e.stopPropagation();  // Prevent carousel from triggering
+                    showImageOverlay(imgSrc);
+            };
                 item.appendChild(img);
                 carouselInner.appendChild(item);
             });
@@ -245,61 +299,69 @@ window.showGameDetails = function(gameId) {
         }
     }
     
-    // === GENRE AND YEAR ===
-    const genreText = document.createElement('p');
-    genreText.className = 'lead text-primary mb-3';
-    genreText.textContent = `${game.gameGenre} • ${game.term} ${game.year}`;
-    modalDetails.appendChild(genreText);
-    
-    // === INFO ROW ===
-    const row = document.createElement('div');
-    row.className = 'row';
-    
-    // Left column
-    const colLeft = document.createElement('div');
-    colLeft.className = 'col-md-6 mb-3';
-    
-    const institutionP = document.createElement('p');
-    institutionP.innerHTML = '<strong>Institution:</strong> ';
-    institutionP.appendChild(document.createTextNode(game.institution));
-    
+    // Creators
     const creatorsP = document.createElement('p');
+    creatorsP.className = 'mb-1';
     creatorsP.innerHTML = '<strong>Creators:</strong> ';
     creatorsP.appendChild(document.createTextNode((game.creators || []).join(', ')));
-    
-    colLeft.appendChild(institutionP);
-    colLeft.appendChild(creatorsP);
-    
-    // Right column
-    const colRight = document.createElement('div');
-    colRight.className = 'col-md-6 mb-3';
-    
+    modalDetails.appendChild(creatorsP);
+
+    // Add whitespace
+    const spacer1 = document.createElement('div');
+    spacer1.className = 'mb-3';
+    modalDetails.appendChild(spacer1);
+
+    // Institution
+    const institutionH6 = document.createElement('h6');
+    institutionH6.className = 'text-muted mb-2';
+    institutionH6.textContent = game.institution;
+    modalDetails.appendChild(institutionH6);
+
+    // Class Number • Term Year
+    const classTermP = document.createElement('p');
+    classTermP.className = 'text-muted mb-1';
+    const classText = game.classNumber ? `${game.classNumber} • ` : '';
+    classTermP.textContent = `${classText}${game.term} ${game.year}`;
+    modalDetails.appendChild(classTermP);
+
+    // Instructors
+    const instructorsH6 = document.createElement('h6');
+    instructorsH6.className = 'text-muted mb-3';
+    instructorsH6.innerHTML = '<strong>Instructor(s):</strong> ';
+    instructorsH6.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
+    modalDetails.appendChild(instructorsH6);
+
+    // Genre (if you want to keep it somewhere)
+    const genreP = document.createElement('p');
+    genreP.className = 'mb-2';
+    genreP.innerHTML = '<strong>Genre:</strong> ';
+    genreP.appendChild(document.createTextNode(game.gameGenre));
+    modalDetails.appendChild(genreP);
+
+    // Keywords
     const keywordsP = document.createElement('p');
+    keywordsP.className = 'mb-3';
     keywordsP.innerHTML = '<strong>Keywords:</strong> ';
     (game.keywords || []).forEach(kw => {
         const badge = document.createElement('span');
-        badge.className = 'badge bg-info badge-tag';
+        badge.className = 'badge bg-info badge-tag me-1';
         badge.textContent = kw;
         keywordsP.appendChild(badge);
     });
-    
-    colRight.appendChild(keywordsP);
-    
-    row.appendChild(colLeft);
-    row.appendChild(colRight);
-    modalDetails.appendChild(row);
-    
+    modalDetails.appendChild(keywordsP);
+
     // === ARTIST STATEMENT ===
     const statementHeading = document.createElement('h6');
     statementHeading.className = 'mt-3 text-success';
     statementHeading.innerHTML = '<i class="fas fa-paint-brush"></i> Artists\' Statement';
-    
+
     const statementText = document.createElement('p');
     statementText.className = 'border-start border-3 border-success ps-3';
     statementText.textContent = game.description || 'No statement provided.';
-    
+
     modalDetails.appendChild(statementHeading);
     modalDetails.appendChild(statementText);
+    
     
     // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
@@ -400,6 +462,30 @@ window.showGameDetails = function(gameId) {
 
     gameDetailModal.show();
 }
+
+// Image overlay functionality
+function showImageOverlay(imageSrc) {
+    const overlay = document.getElementById('image-overlay');
+    const overlayImg = document.getElementById('overlay-image');
+    
+    overlayImg.src = imageSrc;
+    overlay.style.display = 'block';
+    
+    // Remove focus from modal to prevent aria-hidden warning
+    document.activeElement.blur();
+
+    // Close on click anywhere
+    overlay.onclick = () => {
+        overlay.style.display = 'none';
+    };
+}
+
+// Also handle ESC key to close
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.getElementById('image-overlay').style.display = 'none';
+    }
+});
 
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {

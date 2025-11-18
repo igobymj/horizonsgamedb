@@ -1,7 +1,8 @@
 // Detect if running locally
 const IS_DEV = window.location.hostname === 'localhost' || 
                window.location.hostname === '127.0.0.1' ||
-               window.location.hostname.includes('127.0.0.1');
+               window.location.hostname.includes('127.0.0.1') ||
+               window.location.href.includes('beta');
 
 // Supabase connection (same for both)
 const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
