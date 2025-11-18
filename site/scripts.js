@@ -1,6 +1,3 @@
-// 1. Initialize Supabase
-const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bGhlaGpib255cHlqaXloa2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNjkxNjEsImV4cCI6MjA3ODY0NTE2MX0.rWKrKSOCJBLVMPgSt5TAjjIYdFr6tO2Y7V0lQPDz9As';
     
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
@@ -18,7 +15,7 @@ async function fetchGames() {
     
     try {
         const { data, error } = await supabaseClient
-            .from('games') 
+            .from(TABLES.games) 
             .select('*');
 
         if (error) throw error;
@@ -88,7 +85,7 @@ function renderGames(games) {
         // Subtitle (safe)
         const subtitle = document.createElement('h6');
         subtitle.className = 'card-subtitle mb-2 text-muted';
-        subtitle.textContent = `${game.gameGenre} (${game.year})`;
+        subtitle.textContent = `${game.gameGenre} • ${game.term} ${game.year}`;
         
         // Institution
         const institution = document.createElement('p');
@@ -251,7 +248,7 @@ window.showGameDetails = function(gameId) {
     // === GENRE AND YEAR ===
     const genreText = document.createElement('p');
     genreText.className = 'lead text-primary mb-3';
-    genreText.textContent = `${game.gameGenre} (${game.year})`;
+    genreText.textContent = `${game.gameGenre} • ${game.term} ${game.year}`;
     modalDetails.appendChild(genreText);
     
     // === INFO ROW ===
@@ -379,7 +376,7 @@ window.showGameDetails = function(gameId) {
             
             // Step 2: Delete game record from database
             const { error: dbError } = await supabaseClient
-                .from('games')
+                .from(TABLES.games)
                 .delete()
                 .eq('id', gameId);
             

@@ -113,6 +113,17 @@
                                 </div>
                             </div>
 
+                            <div class="col-md-4 mb-3">
+                                <label for="term" class="form-label">Term <span class="text-danger">*</span></label>
+                                <select class="form-select" id="term" required>
+                                    <option value="">Select term...</option>
+                                    <option value="Fall">Fall</option>
+                                    <option value="Winter">Winter</option>
+                                    <option value="Spring">Spring</option>
+                                    <option value="Summer">Summer</option>
+                                </select>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
                                 <select class="form-select" id="institution" required>
@@ -220,6 +231,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
     <script src="upload.js"></script>
 </body>
 </html>

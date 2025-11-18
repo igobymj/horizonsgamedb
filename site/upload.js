@@ -1,6 +1,3 @@
-// Initialize Supabase (use same credentials as main page)
-const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bGhlaGpib255cHlqaXloa2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNjkxNjEsImV4cCI6MjA3ODY0NTE2MX0.rWKrKSOCJBLVMPgSt5TAjjIYdFr6tO2Y7V0lQPDz9As';
 
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
@@ -210,7 +207,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             const fileName = `${timestamp}_${i}_${imgData.name}`;
             
             const { data, error } = await supabaseClient.storage
-                .from('game-images')
+                .from(STORAGE_BUCKETS.images)
                 .upload(fileName, imgData.file, {
                     cacheControl: '3600',
                     upsert: false
@@ -220,7 +217,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             
             // Get public URL
             const { data: urlData } = supabaseClient.storage
-                .from('game-images')
+                .from(STORAGE_BUCKETS.images)
                 .getPublicUrl(fileName);
             
             imageUrls.push(urlData.publicUrl);
@@ -234,6 +231,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             gameTitle: document.getElementById('gameTitle').value.trim(),
             gameGenre: document.getElementById('gameGenre').value,
             year: parseInt(document.getElementById('year').value),
+            term: document.getElementById('term').value,  // ADD THIS LINE
             institution: document.getElementById('institution').value,
             creators: creators,
             keywords: keywords,
@@ -245,7 +243,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         };
         
         const { error: dbError } = await supabaseClient
-            .from('games')
+            .from(TABLES.games)
             .insert([gameData]);
         
         if (dbError) throw dbError;
