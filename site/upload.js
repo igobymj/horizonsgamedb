@@ -31,6 +31,7 @@ let creators = [];
 let keywords = [];
 let instructors = [];
 let compressedImages = [];
+let techUsed = [];
 
 // ===== TAG INPUT FUNCTIONALITY =====
 
@@ -232,10 +233,13 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             gameTitle: document.getElementById('gameTitle').value.trim(),
             gameGenre: document.getElementById('gameGenre').value,
             year: parseInt(document.getElementById('year').value),
-            term: document.getElementById('term').value,  // ADD THIS LINE
+            term: document.getElementById('term').value, 
             institution: document.getElementById('institution').value,
             instructors: instructors,
             classNumber: document.getElementById('classNumber').value.trim() || null,
+            courseName: document.getElementById('courseName').value.trim() || null,  
+            briefDescription: document.getElementById('briefDescription').value.trim() || null,  
+            techUsed: techUsed,
             creators: creators,
             keywords: keywords,
             description: document.getElementById('description').value.trim() || null,
@@ -261,6 +265,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             document.getElementById('upload-form').reset();
             creators = [];
             keywords = [];
+            techUsed = [];
             compressedImages = [];
             document.getElementById('image-previews').innerHTML = '';
             document.getElementById('compression-status').innerHTML = '';
@@ -300,4 +305,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
     setupTagInput('keywords-input', 'keywords-container', keywords);
+    setupTagInput('techUsed-input', 'techUsed-container', techUsed);
+
 });

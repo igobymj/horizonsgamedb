@@ -87,14 +87,21 @@ function renderGames(games) {
     const title = document.createElement('h5');
     title.className = 'card-title text-primary mb-2';
     title.textContent = game.gameTitle;
-    
+    leftContent.appendChild(title);
+
+    // Brief Description (if available)
+    if (game.briefDescription) {
+        const brief = document.createElement('p');
+        brief.className = 'card-text text-muted fst-italic mb-2';
+        brief.textContent = game.briefDescription;
+        leftContent.appendChild(brief);
+    }
+
     // Creators
     const creators = document.createElement('p');
     creators.className = 'card-text mb-3';  // mb-3 for extra space
     creators.innerHTML = '<strong>Creators:</strong> ';
-    creators.appendChild(document.createTextNode((game.creators || []).join(', ')));
-    
-    leftContent.appendChild(title);
+    creators.appendChild(document.createTextNode((game.creators || []).join(', ')));  
     leftContent.appendChild(creators);
     
     // Right side: thumbnail image (if available)
@@ -129,8 +136,8 @@ function renderGames(games) {
     // Class Number • Term Year
     const classTermYear = document.createElement('p');
     classTermYear.className = 'card-text mb-1 text-muted';
-    const classText = game.classNumber ? `${game.classNumber} • ` : '';
-    classTermYear.textContent = `${classText}${game.term} ${game.year}`;
+    const classNumberText = game.classNumber ? `${game.classNumber} • ` : '';
+    classTermYear.textContent = `${classNumberText}${game.term} ${game.year}`;
     
     // Instructors
     const instructors = document.createElement('h6');
@@ -327,12 +334,19 @@ const modalDetails = document.getElementById('modal-details');
     institutionH6.textContent = game.institution;
     leftCol.appendChild(institutionH6);
 
-    // Class Number • Term Year
-    const classTermP = document.createElement('p');
-    classTermP.className = 'text-muted mb-1';
-    const classText = game.classNumber ? `${game.classNumber} • ` : '';
-    classTermP.textContent = `${classText}${game.term} ${game.year}`;
-    leftCol.appendChild(classTermP);
+    // Class Number • Class Name
+    const classInfoP = document.createElement('p');
+    classInfoP.className = 'text-muted mb-1';
+    const classNumberText = game.classNumber ? `${game.classNumber} - ` : '';
+    const courseNameText = game.courseName ? `<em>${game.courseName}</em>` : ''; 
+    classInfoP.innerHTML = `${classNumberText} ${courseNameText}`;
+    leftCol.appendChild(classInfoP);
+
+    // Term and Year
+    const termYearP = document.createElement('p');
+    termYearP.className = 'text-muted mb-3';
+    termYearP.textContent = `${game.term} • ${game.year}`;
+    leftCol.appendChild(termYearP);
 
     // Instructors
     const instructorsH6 = document.createElement('h6');
@@ -360,9 +374,37 @@ const modalDetails = document.getElementById('modal-details');
     });
     leftCol.appendChild(keywordsP);
 
+    // Tech Used
+    if (game.techUsed && game.techUsed.length > 0) {
+        const techP = document.createElement('p');
+        techP.className = 'mb-3';
+        techP.innerHTML = '<strong>Tech Used:</strong> ';
+        game.techUsed.forEach(tech => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-success badge-tag me-1';
+            badge.textContent = tech;
+            techP.appendChild(badge);
+        });
+        leftCol.appendChild(techP);
+    }
+
     // RIGHT COLUMN - Artist's Statement
     const rightCol = document.createElement('div');
     rightCol.className = 'col-md-6';
+
+    // Brief Description 
+    if (game.briefDescription) {
+        const briefHeading = document.createElement('h6');
+        briefHeading.className = 'text-info mb-2';
+        briefHeading.innerHTML = '<i class="fas fa-comment-dots"></i> Quick Summary';
+        
+        const briefText = document.createElement('p');
+        briefText.className = 'fw-bold mb-3';
+        briefText.textContent = game.briefDescription;
+        
+        rightCol.appendChild(briefHeading);
+        rightCol.appendChild(briefText);
+    }
 
     const statementHeading = document.createElement('h6');
     statementHeading.className = 'text-success mb-2';
