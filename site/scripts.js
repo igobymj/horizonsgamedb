@@ -351,18 +351,20 @@ const modalDetails = document.getElementById('modal-details');
     // Instructors
     const instructorsH6 = document.createElement('h6');
     instructorsH6.className = 'text-muted mb-3';
-    instructorsH6.innerHTML = '<strong>Instructor(s):</strong> ';
+    instructorsH6.innerHTML = 'Instructor(s): ';
     instructorsH6.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
     leftCol.appendChild(instructorsH6);
 
-    // Genre
-    const genreP = document.createElement('p');
-    genreP.className = 'mb-2';
-    genreP.innerHTML = '<strong>Genre:</strong> ';
-    genreP.appendChild(document.createTextNode(game.gameGenre));
-    leftCol.appendChild(genreP);
+    // Assignment
+    if (game.assignment) {
+        const assignmentP = document.createElement('p');
+        assignmentP.className = 'mb-2';
+        assignmentP.innerHTML = '<strong>Assignment:</strong> ';
+        assignmentP.appendChild(document.createTextNode(game.assignment));
+        leftCol.appendChild(assignmentP);
+    }
 
-    // Keywords
+  // Keywords
     const keywordsP = document.createElement('p');
     keywordsP.className = 'mb-3';
     keywordsP.innerHTML = '<strong>Keywords:</strong> ';
@@ -392,7 +394,19 @@ const modalDetails = document.getElementById('modal-details');
     const rightCol = document.createElement('div');
     rightCol.className = 'col-md-6';
 
-    // Brief Description 
+    // Genre
+    const genreHeading = document.createElement('h6');
+    genreHeading.className = 'text-primary mb-2';
+    genreHeading.innerHTML = '<i class="fas fa-layer-group"></i> Genre';
+
+    const genreText = document.createElement('p');
+    genreText.className = 'mb-3';
+    genreText.textContent = game.gameGenre;
+
+    rightCol.appendChild(genreHeading);
+    rightCol.appendChild(genreText);
+
+      // Brief Description 
     if (game.briefDescription) {
         const briefHeading = document.createElement('h6');
         briefHeading.className = 'text-info mb-2';
