@@ -1,6 +1,3 @@
-// Initialize Supabase
-const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bGhlaGpib255cHlqaXloa2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNjkxNjEsImV4cCI6MjA3ODY0NTE2MX0.rWKrKSOCJBLVMPgSt5TAjjIYdFr6tO2Y7V0lQPDz9As';
 
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
@@ -64,7 +61,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         
         // Redirect to home page
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = redirectUrl;
         }, 1000);
         
     } catch (error) {

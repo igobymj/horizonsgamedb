@@ -19,7 +19,7 @@ async function setupAuthUI() {
         // Also add a small logout link in header
         const header = document.querySelector('header .container');
         const logoutLink = document.createElement('div');
-        logoutLink.className = 'position-absolute top-0 end-0 p-3';
+        logoutLink.className = 'position-absolute top-0 end-0 p-3 z-3';
         logoutLink.innerHTML = `
             <small class="text-white-50 me-2">Logged in</small>
             <a href="#" id="logout-link" class="text-white text-decoration-none">
@@ -40,7 +40,7 @@ async function setupAuthUI() {
         // User is not logged in - show small login link in header
         const header = document.querySelector('header .container');
         const loginLink = document.createElement('div');
-        loginLink.className = 'position-absolute top-0 end-0 p-3';
+        loginLink.className = 'position-absolute top-0 end-0 p-3 z-3';
         loginLink.innerHTML = `
             <a href="login.html?redirect=index.html" class="text-white text-decoration-none">
                 <i class="fas fa-sign-in-alt me-1"></i>Login
