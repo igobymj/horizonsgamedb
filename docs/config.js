@@ -10,7 +10,10 @@ const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 // Table names switch based on environment
 const TABLES = {
-    games: IS_DEV ? 'games_dev' : 'games'
+    projects: IS_DEV ? 'projects_dev' : 'projects',
+    institutions: IS_DEV ? 'institutions_dev' : 'institutions',
+    people: IS_DEV ? 'people_dev' : 'people',
+    people_projects: IS_DEV ? 'people_projects_dev' : 'people_projects'
 };
 
 // Storage bucket (optional - could also have games-images-dev)

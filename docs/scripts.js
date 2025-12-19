@@ -2,29 +2,29 @@
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
 // Global variable to store games so search works instantly
-let allGames = [];
+let allProjects = [];
 
-const resultsContainer = document.getElementById('game-results');
+const resultsContainer = document.getElementById('project-results');
 const resultCountSpan = document.getElementById('result-count');
 const noResultsAlert = document.getElementById('no-results');
-const gameDetailModal = new bootstrap.Modal(document.getElementById('gameDetailModal'));
+const projectModal = new bootstrap.Modal(document.getElementById('projectDetailModal'));
 
 // 2. Fetch Data Function (Replaces the hardcoded array)
-async function fetchGames() {
+async function fetchProjects() {
     resultsContainer.innerHTML = '<p class="text-center">Loading archive...</p>';
     
     try {
         const { data, error } = await supabaseClient
-            .from(TABLES.games) 
+            .from(TABLES.projects) 
             .select('*');
 
         if (error) throw error;
         
-        allGames = data;
-        renderGames(allGames);
+        allProjects = data;
+        renderProjects(allProjects);
         
     } catch (error) {
-        console.error('Error fetching games:', error);
+        console.error('Error fetching projects:', error);
         
         // Create error message container
         const errorDiv = document.createElement('div');
@@ -32,7 +32,7 @@ async function fetchGames() {
         errorDiv.setAttribute('role', 'alert');
         
         const heading = document.createElement('h5');
-        heading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Unable to load games';
+        heading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Unable to load projects';
         
         const message = document.createElement('p');
         message.className = 'mb-2';
@@ -41,7 +41,7 @@ async function fetchGames() {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'btn btn-sm btn-outline-danger';
         retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
-        retryBtn.onclick = fetchGames;
+        retryBtn.onclick = fetchProjects;
         
         errorDiv.appendChild(heading);
         errorDiv.appendChild(message);
@@ -53,18 +53,18 @@ async function fetchGames() {
 }
 
 // 3. Render Function (Mostly unchanged, just maps database fields)
-function renderGames(games) {
+function renderProjects(projects) {
     resultsContainer.innerHTML = '';
-    resultCountSpan.textContent = games.length;
+    resultCountSpan.textContent = projects.length;
 
-    if (games.length === 0) {
+    if (projects.length === 0) {
         noResultsAlert.classList.remove('d-none');
         return;
     } else {
         noResultsAlert.classList.add('d-none');
     }
 
- games.forEach(game => {
+ projects.forEach(project => {
     // Create card container
     const col = document.createElement('div');
     col.className = 'col';
@@ -86,14 +86,14 @@ function renderGames(games) {
     // Title
     const title = document.createElement('h5');
     title.className = 'card-title text-primary mb-2';
-    title.textContent = game.gameTitle;
+    title.textContent = project.title;
     leftContent.appendChild(title);
 
     // Brief Description (if available)
-    if (game.briefDescription) {
+    if (project.briefDescription) {
         const brief = document.createElement('p');
         brief.className = 'card-text text-muted fst-italic mb-2';
-        brief.textContent = game.briefDescription;
+        brief.textContent = project.briefDescription;
         leftContent.appendChild(brief);
     }
 
@@ -101,19 +101,19 @@ function renderGames(games) {
     const creators = document.createElement('p');
     creators.className = 'card-text mb-3';  // mb-3 for extra space
     creators.innerHTML = '<strong>Creators:</strong> ';
-    creators.appendChild(document.createTextNode((game.creators || []).join(', ')));  
+    creators.appendChild(document.createTextNode((project.creators || []).join(', ')));  
     leftContent.appendChild(creators);
     
     // Right side: thumbnail image (if available)
-    if (game.image_urls && game.image_urls.length > 0) {
+    if (project.image_urls && project.image_urls.length > 0) {
         const thumbnailBtn = document.createElement('button');
         thumbnailBtn.className = 'border-0 bg-transparent p-0';
         thumbnailBtn.style.cursor = 'pointer';
-        thumbnailBtn.onclick = () => showGameDetails(game.id);
+        thumbnailBtn.onclick = () => showProjectDetails(project.id);
         
         const thumbnail = document.createElement('img');
-        thumbnail.src = game.image_urls[0];
-        thumbnail.alt = game.gameTitle;
+        thumbnail.src = project.image_urls[0];
+        thumbnail.alt = project.title;
         thumbnail.className = 'rounded';
         thumbnail.style.cssText = 'width: 120px; height: 120px; object-fit: cover; transition: opacity 0.2s;';
         
@@ -131,24 +131,24 @@ function renderGames(games) {
     // Institution (no label)
     const institution = document.createElement('h6');
     institution.className = 'card-subtitle mb-2 text-muted';
-    institution.textContent = game.institution;
+    institution.textContent = project.institution;
     
     // Class Number • Term Year
     const classTermYear = document.createElement('p');
     classTermYear.className = 'card-text mb-1 text-muted';
-    const classNumberText = game.classNumber ? `${game.classNumber} • ` : '';
-    classTermYear.textContent = `${classNumberText}${game.term} ${game.year}`;
+    const classNumberText = project.classNumber ? `${project.classNumber} • ` : '';
+    classTermYear.textContent = `${classNumberText}${project.term} ${project.year}`;
     
     // Instructors
     const instructors = document.createElement('h6');
     instructors.className = 'card-subtitle mb-2 text-muted';
     instructors.innerHTML = '<strong>Instructor(s):</strong> ';
-    instructors.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
+    instructors.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
     
     // Keywords (badges)
     const keywordDiv = document.createElement('div');
     keywordDiv.className = 'mt-2 mb-3';
-    (game.keywords || []).forEach(kw => {
+    (project.keywords || []).forEach(kw => {
         const badge = document.createElement('span');
         badge.className = 'badge bg-secondary badge-tag';
         badge.textContent = kw;
@@ -161,7 +161,7 @@ function renderGames(games) {
     const btn = document.createElement('button');
     btn.className = 'btn btn-sm btn-outline-info w-100';
     btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
-    btn.onclick = () => showGameDetails(game.id);
+    btn.onclick = () => showProjectDetails(project.id);
     btnContainer.appendChild(btn);
     
     // Assemble everything
@@ -173,7 +173,7 @@ function renderGames(games) {
  
 }
 
-// 4. Search Logic (Updates to search the 'allGames' variable)
+// 4. Search Logic (Updates to search the 'allProjects' variable)
 document.getElementById('search-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -182,30 +182,30 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
     const institutionFilter = document.getElementById('filter-institution').value;
     const genreFilter = document.getElementById('filter-genre').value;
 
-    const filteredGames = allGames.filter(game => {
+    const filteredProjects = allProjects.filter(project => {
         // Safety checks (?.) added in case fields are missing in DB
-        const titleMatch = game.gameTitle?.toLowerCase().includes(titleQuery) ||
-                           (game.keywords || []).some(kw => kw.toLowerCase().includes(titleQuery));
+        const titleMatch = project.title?.toLowerCase().includes(titleQuery) ||
+                           (project.keywords || []).some(kw => kw.toLowerCase().includes(titleQuery));
         
         const creatorMatch = !creatorQuery || 
-                             (game.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
+                             (project.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
                              
-        const institutionMatch = !institutionFilter || game.institution === institutionFilter;
-        const genreMatch = !genreFilter || game.gameGenre === genreFilter;
+        const institutionMatch = !institutionFilter || project.institution === institutionFilter;
+        const genreMatch = !genreFilter || project.genre === genreFilter;
 
         return titleMatch && creatorMatch && institutionMatch && genreMatch;
     });
 
-    renderGames(filteredGames);
+    renderProjects(filteredProjects);
 });
 
 // 5. Modal Logic (Updated for Database fields)
-window.showGameDetails = function(gameId) {
-    const game = allGames.find(g => g.id === gameId);
-    if (!game) return;
+window.showProjectDetails = function(projectID) {
+    const project = allProjects.find(g => g.id === projectID);
+    if (!project) return;
 
-const modalTitleElement = document.getElementById('gameDetailModalLabel');
-modalTitleElement.textContent = game.gameTitle;
+const modalTitleElement = document.getElementById('projectModalLabel');
+modalTitleElement.textContent = project.title;
 modalTitleElement.className = 'modal-title fs-3 fw-bold';  // ADD THIS LINE
 
 const modalDetails = document.getElementById('modal-details');
@@ -214,7 +214,7 @@ const modalDetails = document.getElementById('modal-details');
     modalDetails.innerHTML = '';
     
     // === IMAGE CAROUSEL SECTION ===
-    const images = game.image_urls || [];
+    const images = project.image_urls || [];
 
     if (images.length > 0) {
         if (images.length === 1) {
@@ -237,7 +237,7 @@ const modalDetails = document.getElementById('modal-details');
             modalDetails.appendChild(imgContainer);
         } else {
             // Multiple images - carousel
-            const carouselId = `carousel-${game.id}`;
+            const carouselId = `carousel-${project.id}`;
             const carousel = document.createElement('div');
             carousel.id = carouselId;
             carousel.className = 'carousel slide mb-4';
@@ -320,7 +320,7 @@ const modalDetails = document.getElementById('modal-details');
     const creatorsP = document.createElement('p');
     creatorsP.className = 'mb-1';
     creatorsP.innerHTML = '<strong>Creators:</strong> ';
-    creatorsP.appendChild(document.createTextNode((game.creators || []).join(', ')));
+    creatorsP.appendChild(document.createTextNode((project.creators || []).join(', ')));
     leftCol.appendChild(creatorsP);
 
     // Add whitespace
@@ -331,36 +331,36 @@ const modalDetails = document.getElementById('modal-details');
     // Institution
     const institutionH6 = document.createElement('h6');
     institutionH6.className = 'text-muted mb-2';
-    institutionH6.textContent = game.institution;
+    institutionH6.textContent = project.institution;
     leftCol.appendChild(institutionH6);
 
     // Class Number • Class Name
     const classInfoP = document.createElement('p');
     classInfoP.className = 'text-muted mb-1';
-    const classNumberText = game.classNumber ? `${game.classNumber} - ` : '';
-    const courseNameText = game.courseName ? `<em>${game.courseName}</em>` : ''; 
+    const classNumberText = project.classNumber ? `${project.classNumber} - ` : '';
+    const courseNameText = project.courseName ? `<em>${project.courseName}</em>` : ''; 
     classInfoP.innerHTML = `${classNumberText} ${courseNameText}`;
     leftCol.appendChild(classInfoP);
 
     // Term and Year
     const termYearP = document.createElement('p');
     termYearP.className = 'text-muted mb-3';
-    termYearP.textContent = `${game.term} • ${game.year}`;
+    termYearP.textContent = `${project.term} • ${project.year}`;
     leftCol.appendChild(termYearP);
 
     // Instructors
     const instructorsH6 = document.createElement('h6');
     instructorsH6.className = 'text-muted mb-3';
     instructorsH6.innerHTML = 'Instructor(s): ';
-    instructorsH6.appendChild(document.createTextNode((game.instructors || []).join(', ') || 'N/A'));
+    instructorsH6.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
     leftCol.appendChild(instructorsH6);
 
     // Assignment
-    if (game.assignment) {
+    if (project.assignment) {
         const assignmentP = document.createElement('p');
         assignmentP.className = 'mb-2';
         assignmentP.innerHTML = '<strong>Assignment:</strong> ';
-        assignmentP.appendChild(document.createTextNode(game.assignment));
+        assignmentP.appendChild(document.createTextNode(project.assignment));
         leftCol.appendChild(assignmentP);
     }
 
@@ -368,7 +368,7 @@ const modalDetails = document.getElementById('modal-details');
     const keywordsP = document.createElement('p');
     keywordsP.className = 'mb-3';
     keywordsP.innerHTML = '<strong>Keywords:</strong> ';
-    (game.keywords || []).forEach(kw => {
+    (project.keywords || []).forEach(kw => {
         const badge = document.createElement('span');
         badge.className = 'badge bg-info badge-tag me-1';
         badge.textContent = kw;
@@ -377,11 +377,11 @@ const modalDetails = document.getElementById('modal-details');
     leftCol.appendChild(keywordsP);
 
     // Tech Used
-    if (game.techUsed && game.techUsed.length > 0) {
+    if (project.techUsed && project.techUsed.length > 0) {
         const techP = document.createElement('p');
         techP.className = 'mb-3';
         techP.innerHTML = '<strong>Tech Used:</strong> ';
-        game.techUsed.forEach(tech => {
+        project.techUsed.forEach(tech => {
             const badge = document.createElement('span');
             badge.className = 'badge bg-success badge-tag me-1';
             badge.textContent = tech;
@@ -401,20 +401,20 @@ const modalDetails = document.getElementById('modal-details');
 
     const genreText = document.createElement('p');
     genreText.className = 'mb-3';
-    genreText.textContent = game.gameGenre;
+    genreText.textContent = project.genre;
 
     rightCol.appendChild(genreHeading);
     rightCol.appendChild(genreText);
 
       // Brief Description 
-    if (game.briefDescription) {
+    if (project.briefDescription) {
         const briefHeading = document.createElement('h6');
         briefHeading.className = 'text-info mb-2';
         briefHeading.innerHTML = '<i class="fas fa-comment-dots"></i> Quick Summary';
         
         const briefText = document.createElement('p');
         briefText.className = 'fw-bold mb-3';
-        briefText.textContent = game.briefDescription;
+        briefText.textContent = project.briefDescription;
         
         rightCol.appendChild(briefHeading);
         rightCol.appendChild(briefText);
@@ -426,7 +426,7 @@ const modalDetails = document.getElementById('modal-details');
 
     const statementText = document.createElement('p');
     statementText.className = 'border-start border-3 border-success ps-3';
-    statementText.textContent = game.description || 'No statement provided.';
+    statementText.textContent = project.fullDescription || 'No statement provided.';
 
     rightCol.appendChild(statementHeading);
     rightCol.appendChild(statementText);
@@ -438,10 +438,10 @@ const modalDetails = document.getElementById('modal-details');
     
     // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
-    if (game.videoLink) {
+    if (project.videoLink) {
         vidLink.onclick = (e) => {
             e.preventDefault();
-            showVideoOverlay(game.videoLink);
+            showVideoOverlay(project.videoLink);
         };
         vidLink.classList.remove('disabled');
     } else {
@@ -450,11 +450,11 @@ const modalDetails = document.getElementById('modal-details');
     }
 
     const downloadLink = document.getElementById('modal-download-link');
-    downloadLink.href = game.downloadLink || '#';
-    downloadLink.classList.toggle('disabled', !game.downloadLink);
+    downloadLink.href = project.downloadLink || '#';
+    downloadLink.classList.toggle('disabled', !project.downloadLink);
 
     // Source link (dynamic creation)
-    const footer = document.querySelector('#gameDetailModal .modal-footer');
+    const footer = document.querySelector('#projectModal .modal-footer');
     let sourceBtn = document.getElementById('modal-source-link-temp');
     if (!sourceBtn) {
         sourceBtn = document.createElement('a');
@@ -464,13 +464,13 @@ const modalDetails = document.getElementById('modal-details');
         sourceBtn.target = '_blank';
         footer.insertBefore(sourceBtn, document.getElementById('modal-download-link'));
     }
-    sourceBtn.href = game.repoLink || '#';
-    sourceBtn.classList.toggle('disabled', !game.repoLink);
+    sourceBtn.href = project.repoLink || '#';
+    sourceBtn.classList.toggle('disabled', !project.repoLink);
 
-    // Add delete button for authenticated users (at the end of showGameDetails function)
-    async function addDeleteButton(gameId) {
+    // Add delete button for authenticated users (at the end of showProjectDetails function)
+    async function addDeleteButton(projectID) {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        const footer = document.querySelector('#gameDetailModal .modal-footer');
+        const footer = document.querySelector('#projectModal .modal-footer');
         
         // Remove existing delete button if any
         const existingDeleteBtn = document.getElementById('modal-delete-btn');
@@ -483,32 +483,32 @@ const modalDetails = document.getElementById('modal-details');
             const deleteBtn = document.createElement('button');
             deleteBtn.id = 'modal-delete-btn';
             deleteBtn.className = 'btn btn-danger me-auto';
-            deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Game';
-            deleteBtn.onclick = () => confirmDelete(gameId);
+            deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Project';
+            deleteBtn.onclick = () => confirmDelete(projectID);
             
             // Insert at the beginning of footer
             footer.insertBefore(deleteBtn, footer.firstChild);
         }
     }
 
-    async function confirmDelete(gameId) {
-        if (!confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
+    async function confirmDelete(projectID) {
+        if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
             return;
         }
         
-        const game = allGames.find(g => g.id === gameId);
-        if (!game) return;
+        const project = allProjects.find(g => g.id === projectID);
+        if (!project) return;
         
         try {
             // Step 1: Delete images from storage
-            if (game.image_urls && game.image_urls.length > 0) {
-                for (const imageUrl of game.image_urls) {
+            if (project.image_urls && project.image_urls.length > 0) {
+                for (const imageUrl of project.image_urls) {
                     // Extract filename from URL
                     const urlParts = imageUrl.split('/');
                     const filename = urlParts[urlParts.length - 1];
                     
                     const { error: storageError } = await supabaseClient.storage
-                        .from('game-images')
+                        .from('project-images')
                         .remove([filename]);
                     
                     if (storageError) {
@@ -517,31 +517,31 @@ const modalDetails = document.getElementById('modal-details');
                 }
             }
             
-            // Step 2: Delete game record from database
+            // Step 2: Delete project record from database
             const { error: dbError } = await supabaseClient
-                .from(TABLES.games)
+                .from(TABLES.projects)
                 .delete()
-                .eq('id', gameId);
+                .eq('id', projectID);
             
             if (dbError) throw dbError;
             
             // Step 3: Update UI
-            allGames = allGames.filter(g => g.id !== gameId);
-            renderGames(allGames);
+            allProjects = allProjects.filter(g => g.id !== projectID);
+            renderProjects(allProjects);
             
             // Close modal and show success
-            gameDetailModal.hide();
-            alert('Game deleted successfully!');
+            projectModal.hide();
+            alert('Project deleted successfully!');
             
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Failed to delete game: ' + error.message);
+            alert('Failed to delete project: ' + error.message);
         }
     }
 
-    addDeleteButton(game.id);
+    addDeleteButton(project.id);
 
-    gameDetailModal.show();
+    projectModal.show();
 }
 
 // Image overlay functionality
@@ -611,5 +611,5 @@ document.addEventListener('keydown', (e) => {
 
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {
-    fetchGames(); // Fetch real data instead of using the array
+    fetchProjects(); // Fetch real data instead of using the array
 });
