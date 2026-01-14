@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <header class="bg-dark text-white p-4 mb-4 shadow">
         <div class="container">
@@ -26,16 +28,16 @@
                 <div class="card shadow">
                     <div class="card-body p-4">
                         <h2 class="h4 mb-4 text-center"><i class="fas fa-user-circle me-2"></i>Account Access</h2>
-                        
+
                         <!-- Tab Navigation -->
                         <ul class="nav nav-tabs mb-4" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="login-tab" data-bs-toggle="tab" 
-                                        data-bs-target="#login-panel" type="button">Login</button>
+                                <button class="nav-link active" id="login-tab" data-bs-toggle="tab"
+                                    data-bs-target="#login-panel" type="button">Login</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="signup-tab" data-bs-toggle="tab" 
-                                        data-bs-target="#signup-panel" type="button">Sign Up</button>
+                                <button class="nav-link" id="signup-tab" data-bs-toggle="tab"
+                                    data-bs-target="#signup-panel" type="button">Sign Up</button>
                             </li>
                         </ul>
 
@@ -61,18 +63,57 @@
 
                             <!-- Sign Up Panel -->
                             <div class="tab-pane fade" id="signup-panel">
-                                <div class="text-center py-4">
-                                    <i class="fas fa-user-lock fa-3x text-muted mb-3"></i>
-                                    <h5 class="mb-3">Account Registration Closed</h5>
-                                    <p class="text-muted mb-4">
-                                        New account registration is currently restricted. 
-                                        If you need upload access, please contact MJ for login credentials.
-                                    </p>
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-envelope me-2"></i>
-                                        <strong>Contact:</strong> Reach out to MJ to request access
+                                <form id="signup-form">
+                                    <div class="mb-3">
+                                        <label for="signup-name" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="signup-name" required>
                                     </div>
-                                </div>
+                                    <div class="mb-3">
+                                        <label for="signup-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="signup-email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="signup-institution" class="form-label">Institution</label>
+                                        <input type="text" class="form-control" id="signup-institution"
+                                            placeholder="e.g., University of California, Berkeley" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="signup-type" class="form-label">I am a...</label>
+                                        <select class="form-select" id="signup-type" required>
+                                            <option value="">Select your role</option>
+                                            <option value="student">Student</option>
+                                            <option value="instructor">Instructor</option>
+                                            <option value="contributor">Contributor</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="signup-code" class="form-label">Invitation Code</label>
+                                        <input type="text" class="form-control" id="signup-code"
+                                            placeholder="TEST-XXXX-XXXX" required>
+                                        <small class="form-text text-muted">
+                                            Enter the invitation code you received
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="signup-password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="signup-password" minlength="6"
+                                            required>
+                                        <small class="form-text text-muted">
+                                            Minimum 6 characters
+                                        </small>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary" id="signup-btn">
+                                            <i class="fas fa-user-plus me-2"></i>Create Account
+                                        </button>
+                                    </div>
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <small>
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <strong>Beta Period:</strong> Contact MJ for an invitation code
+                                        </small>
+                                    </div>
+                                </form>
                             </div>
                         </div>
 
@@ -99,4 +140,5 @@
     <script src="config.js"></script>
     <script src="login.js"></script>
 </body>
+
 </html>
