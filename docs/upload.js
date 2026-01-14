@@ -301,6 +301,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentYear = new Date().getFullYear();
     document.getElementById('year').value = currentYear;
 
+    // Load institutions
+    loadInstitutions();
+
     // Setup tag inputs
     setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
@@ -308,3 +311,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTagInput('techUsed-input', 'techUsed-container', techUsed);
 
 });
+
+// Load institutions for upload form dropdown
+async function loadInstitutions() {
+    try {
+        const { data: institutions, error } = await supabaseClient
+            .from(TABLES.institutions)
+            .select('institutionname')
+            .order('institutionname');
+
+        if (error) {
+            console.error('Error loading institutions:', error);
+            return;
+        }
+
+        const select = document.getElementById('institution');
+        institutions.forEach(inst => {
+            const option = document.createElement('option');
+            option.value = inst.institutionname;
+            option.textContent = inst.institutionname;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading institutions:', error);
+    }
+}

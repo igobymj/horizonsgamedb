@@ -75,7 +75,11 @@
                                     <div class="mb-3">
                                         <label for="signup-institution" class="form-label">Institution</label>
                                         <input type="text" class="form-control" id="signup-institution"
+                                            list="institutions-list"
                                             placeholder="e.g., University of California, Berkeley" required>
+                                        <datalist id="institutions-list">
+                                            <!-- Populated dynamically from database -->
+                                        </datalist>
                                     </div>
                                     <div class="mb-3">
                                         <label for="signup-type" class="form-label">I am a...</label>

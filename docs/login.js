@@ -72,6 +72,30 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
 });
 
+// Load institutions for autocomplete
+async function loadInstitutions() {
+    try {
+        const { data: institutions, error } = await supabaseClient
+            .from(TABLES.institutions)
+            .select('institutionname')
+            .order('institutionname');
+
+        if (error) {
+            console.error('Error loading institutions:', error);
+            return;
+        }
+
+        const datalist = document.getElementById('institutions-list');
+        institutions.forEach(inst => {
+            const option = document.createElement('option');
+            option.value = inst.institutionname;
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading institutions:', error);
+    }
+}
+
 // Signup Form
 document.getElementById('signup-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -187,4 +211,5 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
+    loadInstitutions();
 });

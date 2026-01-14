@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <!-- Developer Preview Notice -->
     <div class="alert alert-warning mb-0" role="alert">
         <i class="fas fa-exclamation-triangle me-2"></i>
         <strong>Developer Preview:</strong> Not actual student projects.
-    </div>           
+    </div>
 
     <header class="bg-dark text-white p-4 mb-4 shadow position-relative">
         <div class="container">
@@ -38,13 +40,8 @@
                     <label for="filter-institution" class="form-label">Institution</label>
                     <select class="form-select" id="filter-institution">
                         <option value="">All Institutions</option>
-                        <option value="Hostos">Hostos</option>
-                        <option value="Michigan State">Michigan State</option>
-                        <option value="USC">USC</option>
-                        <option value="Canterbury University">Canterbury University</option>
-                        <option value="UC Santa Cruz">UC Santa Cruz</option>
-                        <option value="Indiecade University">Indiecade University</option>
-            </select>
+                        <!-- Populated dynamically from database -->
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label for="filter-genre" class="form-label">Genre</label>
@@ -64,7 +61,7 @@
         <section>
             <h2 class="h4 mb-4">Project Results (<span id="result-count">0</span>)</h2>
             <div id="project-results" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                </div>
+            </div>
             <div id="no-results" class="alert alert-warning mt-4 d-none" role="alert">
                 No projects match your search criteria. Try a broader search!
             </div>
@@ -76,7 +73,8 @@
         <p class="mb-0">Powered by open source projects.</p>
     </footer>
 
-    <div class="modal fade" id="projectDetailModal" tabindex="-1" aria-labelledby="projectDetailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="projectDetailModal" tabindex="-1" aria-labelledby="projectDetailModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
@@ -85,12 +83,14 @@
                 </div>
                 <div class="modal-body">
                     <div id="modal-details">
-                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <a id="modal-video-link" href="#" target="_blank" class="btn btn-danger me-auto"><i class="fab fa-youtube"></i> Watch Trailer</a>
+                    <a id="modal-video-link" href="#" target="_blank" class="btn btn-danger me-auto"><i
+                            class="fab fa-youtube"></i> Watch Trailer</a>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a id="modal-download-link" href="#" target="_blank" class="btn btn-success"><i class="fas fa-download"></i> Download Game</a>
+                    <a id="modal-download-link" href="#" target="_blank" class="btn btn-success"><i
+                            class="fas fa-download"></i> Download Game</a>
                 </div>
             </div>
         </div>
@@ -113,6 +113,7 @@
         <span class="video-overlay-close">&times;</span>
         <iframe id="overlay-video" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     </div>
-    
+
 </body>
+
 </html>

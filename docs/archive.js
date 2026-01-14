@@ -1,4 +1,4 @@
-    
+
 const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
 // Global variable to store games so search works instantly
@@ -12,41 +12,41 @@ const projectModal = new bootstrap.Modal(document.getElementById('projectDetailM
 // 2. Fetch Data Function (Replaces the hardcoded array)
 async function fetchProjects() {
     resultsContainer.innerHTML = '<p class="text-center">Loading archive...</p>';
-    
+
     try {
         const { data, error } = await supabaseClient
-            .from(TABLES.projects) 
+            .from(TABLES.projects)
             .select('*');
 
         if (error) throw error;
-        
+
         allProjects = data;
         renderProjects(allProjects);
-        
+
     } catch (error) {
         console.error('Error fetching projects:', error);
-        
+
         // Create error message container
         const errorDiv = document.createElement('div');
         errorDiv.className = 'alert alert-danger text-center';
         errorDiv.setAttribute('role', 'alert');
-        
+
         const heading = document.createElement('h5');
         heading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Unable to load projects';
-        
+
         const message = document.createElement('p');
         message.className = 'mb-2';
         message.textContent = error.message || 'Database connection failed';
-        
+
         const retryBtn = document.createElement('button');
         retryBtn.className = 'btn btn-sm btn-outline-danger';
         retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
         retryBtn.onclick = fetchProjects;
-        
+
         errorDiv.appendChild(heading);
         errorDiv.appendChild(message);
         errorDiv.appendChild(retryBtn);
-        
+
         resultsContainer.innerHTML = '';
         resultsContainer.appendChild(errorDiv);
     }
@@ -64,117 +64,117 @@ function renderProjects(projects) {
         noResultsAlert.classList.add('d-none');
     }
 
- projects.forEach(project => {
-    // Create card container
-    const col = document.createElement('div');
-    col.className = 'col';
-    
-    const card = document.createElement('div');
-    card.className = 'card game-card shadow-sm';
-    
-    const cardBody = document.createElement('div');
-    cardBody.className = 'card-body d-flex flex-column';
-    
-    // Create a flex container for title/creators + image
-    const headerRow = document.createElement('div');
-    headerRow.className = 'd-flex justify-content-between align-items-start mb-3';
-    
-    // Left side: title and creators
-    const leftContent = document.createElement('div');
-    leftContent.className = 'flex-grow-1 me-3';
-    
-    // Title
-    const title = document.createElement('h5');
-    title.className = 'card-title text-primary mb-2';
-    title.textContent = project.title;
-    leftContent.appendChild(title);
+    projects.forEach(project => {
+        // Create card container
+        const col = document.createElement('div');
+        col.className = 'col';
 
-    // Brief Description (if available)
-    if (project.briefDescription) {
-        const brief = document.createElement('p');
-        brief.className = 'card-text text-muted fst-italic mb-2';
-        brief.textContent = project.briefDescription;
-        leftContent.appendChild(brief);
-    }
+        const card = document.createElement('div');
+        card.className = 'card game-card shadow-sm';
 
-    // Creators
-    const creators = document.createElement('p');
-    creators.className = 'card-text mb-3';  // mb-3 for extra space
-    creators.innerHTML = '<strong>Creators:</strong> ';
-    creators.appendChild(document.createTextNode((project.creators || []).join(', ')));  
-    leftContent.appendChild(creators);
-    
-    // Right side: thumbnail image (if available)
-    if (project.image_urls && project.image_urls.length > 0) {
-        const thumbnailBtn = document.createElement('button');
-        thumbnailBtn.className = 'border-0 bg-transparent p-0';
-        thumbnailBtn.style.cursor = 'pointer';
-        thumbnailBtn.onclick = () => showProjectDetails(project.id);
-        
-        const thumbnail = document.createElement('img');
-        thumbnail.src = project.image_urls[0];
-        thumbnail.alt = project.title;
-        thumbnail.className = 'rounded';
-        thumbnail.style.cssText = 'width: 120px; height: 120px; object-fit: cover; transition: opacity 0.2s;';
-        
-        // Hover effect
-        thumbnailBtn.onmouseenter = () => thumbnail.style.opacity = '0.8';
-        thumbnailBtn.onmouseleave = () => thumbnail.style.opacity = '1';
-        
-        thumbnailBtn.appendChild(thumbnail);
-        headerRow.appendChild(leftContent);
-        headerRow.appendChild(thumbnailBtn);
-    } else {
-        headerRow.appendChild(leftContent);
-    }
-    
-    // Institution (no label)
-    const institution = document.createElement('h6');
-    institution.className = 'card-subtitle mb-2 text-muted';
-    institution.textContent = project.institution;
-    
-    // Class Number • Term Year
-    const classTermYear = document.createElement('p');
-    classTermYear.className = 'card-text mb-1 text-muted';
-    const classNumberText = project.classNumber ? `${project.classNumber} • ` : '';
-    classTermYear.textContent = `${classNumberText}${project.term} ${project.year}`;
-    
-    // Instructors
-    const instructors = document.createElement('h6');
-    instructors.className = 'card-subtitle mb-2 text-muted';
-    instructors.innerHTML = '<strong>Instructor(s):</strong> ';
-    instructors.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
-    
-    // Keywords (badges)
-    const keywordDiv = document.createElement('div');
-    keywordDiv.className = 'mt-2 mb-3';
-    (project.keywords || []).forEach(kw => {
-        const badge = document.createElement('span');
-        badge.className = 'badge bg-secondary badge-tag';
-        badge.textContent = kw;
-        keywordDiv.appendChild(badge);
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body d-flex flex-column';
+
+        // Create a flex container for title/creators + image
+        const headerRow = document.createElement('div');
+        headerRow.className = 'd-flex justify-content-between align-items-start mb-3';
+
+        // Left side: title and creators
+        const leftContent = document.createElement('div');
+        leftContent.className = 'flex-grow-1 me-3';
+
+        // Title
+        const title = document.createElement('h5');
+        title.className = 'card-title text-primary mb-2';
+        title.textContent = project.title;
+        leftContent.appendChild(title);
+
+        // Brief Description (if available)
+        if (project.briefDescription) {
+            const brief = document.createElement('p');
+            brief.className = 'card-text text-muted fst-italic mb-2';
+            brief.textContent = project.briefDescription;
+            leftContent.appendChild(brief);
+        }
+
+        // Creators
+        const creators = document.createElement('p');
+        creators.className = 'card-text mb-3';  // mb-3 for extra space
+        creators.innerHTML = '<strong>Creators:</strong> ';
+        creators.appendChild(document.createTextNode((project.creators || []).join(', ')));
+        leftContent.appendChild(creators);
+
+        // Right side: thumbnail image (if available)
+        if (project.image_urls && project.image_urls.length > 0) {
+            const thumbnailBtn = document.createElement('button');
+            thumbnailBtn.className = 'border-0 bg-transparent p-0';
+            thumbnailBtn.style.cursor = 'pointer';
+            thumbnailBtn.onclick = () => showProjectDetails(project.id);
+
+            const thumbnail = document.createElement('img');
+            thumbnail.src = project.image_urls[0];
+            thumbnail.alt = project.title;
+            thumbnail.className = 'rounded';
+            thumbnail.style.cssText = 'width: 120px; height: 120px; object-fit: cover; transition: opacity 0.2s;';
+
+            // Hover effect
+            thumbnailBtn.onmouseenter = () => thumbnail.style.opacity = '0.8';
+            thumbnailBtn.onmouseleave = () => thumbnail.style.opacity = '1';
+
+            thumbnailBtn.appendChild(thumbnail);
+            headerRow.appendChild(leftContent);
+            headerRow.appendChild(thumbnailBtn);
+        } else {
+            headerRow.appendChild(leftContent);
+        }
+
+        // Institution (no label)
+        const institution = document.createElement('h6');
+        institution.className = 'card-subtitle mb-2 text-muted';
+        institution.textContent = project.institution;
+
+        // Class Number • Term Year
+        const classTermYear = document.createElement('p');
+        classTermYear.className = 'card-text mb-1 text-muted';
+        const classNumberText = project.classNumber ? `${project.classNumber} • ` : '';
+        classTermYear.textContent = `${classNumberText}${project.term} ${project.year}`;
+
+        // Instructors
+        const instructors = document.createElement('h6');
+        instructors.className = 'card-subtitle mb-2 text-muted';
+        instructors.innerHTML = '<strong>Instructor(s):</strong> ';
+        instructors.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
+
+        // Keywords (badges)
+        const keywordDiv = document.createElement('div');
+        keywordDiv.className = 'mt-2 mb-3';
+        (project.keywords || []).forEach(kw => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-secondary badge-tag';
+            badge.textContent = kw;
+            keywordDiv.appendChild(badge);
+        });
+
+        // Button
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'mt-auto';
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-outline-info w-100';
+        btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
+        btn.onclick = () => showProjectDetails(project.id);
+        btnContainer.appendChild(btn);
+
+        // Assemble everything
+        cardBody.append(headerRow, institution, classTermYear, instructors, keywordDiv, btnContainer);
+        card.appendChild(cardBody);
+        col.appendChild(card);
+        resultsContainer.appendChild(col);
     });
-    
-    // Button
-    const btnContainer = document.createElement('div');
-    btnContainer.className = 'mt-auto';
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-sm btn-outline-info w-100';
-    btn.innerHTML = '<i class="fas fa-info-circle"></i> Details';
-    btn.onclick = () => showProjectDetails(project.id);
-    btnContainer.appendChild(btn);
-    
-    // Assemble everything
-    cardBody.append(headerRow, institution, classTermYear, instructors, keywordDiv, btnContainer);
-    card.appendChild(cardBody);
-    col.appendChild(card);
-    resultsContainer.appendChild(col);
-});
- 
+
 }
 
 // 4. Search Logic (Updates to search the 'allProjects' variable)
-document.getElementById('search-form').addEventListener('submit', function(e) {
+document.getElementById('search-form').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const titleQuery = document.getElementById('search-title').value.toLowerCase();
@@ -185,11 +185,11 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
     const filteredProjects = allProjects.filter(project => {
         // Safety checks (?.) added in case fields are missing in DB
         const titleMatch = project.title?.toLowerCase().includes(titleQuery) ||
-                           (project.keywords || []).some(kw => kw.toLowerCase().includes(titleQuery));
-        
-        const creatorMatch = !creatorQuery || 
-                             (project.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
-                             
+            (project.keywords || []).some(kw => kw.toLowerCase().includes(titleQuery));
+
+        const creatorMatch = !creatorQuery ||
+            (project.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
+
         const institutionMatch = !institutionFilter || project.institution === institutionFilter;
         const genreMatch = !genreFilter || project.genre === genreFilter;
 
@@ -200,19 +200,19 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
 });
 
 // 5. Modal Logic (Updated for Database fields)
-window.showProjectDetails = function(projectID) {
+window.showProjectDetails = function (projectID) {
     const project = allProjects.find(g => g.id === projectID);
     if (!project) return;
 
-const modalTitleElement = document.getElementById('projectModalLabel');
-modalTitleElement.textContent = project.title;
-modalTitleElement.className = 'modal-title fs-3 fw-bold';  // ADD THIS LINE
+    const modalTitleElement = document.getElementById('projectModalLabel');
+    modalTitleElement.textContent = project.title;
+    modalTitleElement.className = 'modal-title fs-3 fw-bold';  // ADD THIS LINE
 
-const modalDetails = document.getElementById('modal-details');
-    
+    const modalDetails = document.getElementById('modal-details');
+
     // Clear previous content
     modalDetails.innerHTML = '';
-    
+
     // === IMAGE CAROUSEL SECTION ===
     const images = project.image_urls || [];
 
@@ -221,7 +221,7 @@ const modalDetails = document.getElementById('modal-details');
             // Single image
             const imgContainer = document.createElement('div');
             imgContainer.className = 'text-center mb-4';
-            
+
             const img = document.createElement('img');
             img.src = images[0];
             img.className = 'img-fluid rounded shadow';
@@ -232,7 +232,7 @@ const modalDetails = document.getElementById('modal-details');
             img.onclick = (e) => {
                 e.stopPropagation();  // Prevent carousel from triggering
                 showImageOverlay(images[0]);
-            };            
+            };
             imgContainer.appendChild(img);
             modalDetails.appendChild(imgContainer);
         } else {
@@ -244,7 +244,7 @@ const modalDetails = document.getElementById('modal-details');
             carousel.setAttribute('data-bs-ride', 'carousel');
             carousel.style.maxWidth = '600px';  // Constrain carousel width
             carousel.style.margin = '0 auto';    // Center it
-            
+
             // Indicators
             const indicators = document.createElement('div');
             indicators.className = 'carousel-indicators';
@@ -259,14 +259,14 @@ const modalDetails = document.getElementById('modal-details');
                 }
                 indicators.appendChild(button);
             });
-            
+
             // Carousel items
             const carouselInner = document.createElement('div');
             carouselInner.className = 'carousel-inner rounded shadow-sm';
             images.forEach((imgSrc, index) => {
                 const item = document.createElement('div');
                 item.className = index === 0 ? 'carousel-item active' : 'carousel-item';
-                
+
                 const img = document.createElement('img');
                 img.src = imgSrc;
                 img.className = 'd-block w-100 rounded';
@@ -277,11 +277,11 @@ const modalDetails = document.getElementById('modal-details');
                 img.onclick = (e) => {
                     e.stopPropagation();  // Prevent carousel from triggering
                     showImageOverlay(imgSrc);
-            };
+                };
                 item.appendChild(img);
                 carouselInner.appendChild(item);
             });
-            
+
             // Carousel controls
             const prevBtn = document.createElement('button');
             prevBtn.className = 'carousel-control-prev';
@@ -289,14 +289,14 @@ const modalDetails = document.getElementById('modal-details');
             prevBtn.setAttribute('data-bs-target', `#${carouselId}`);
             prevBtn.setAttribute('data-bs-slide', 'prev');
             prevBtn.innerHTML = '<span class="carousel-control-prev-icon" aria-hidden="true"></span>';
-            
+
             const nextBtn = document.createElement('button');
             nextBtn.className = 'carousel-control-next';
             nextBtn.type = 'button';
             nextBtn.setAttribute('data-bs-target', `#${carouselId}`);
             nextBtn.setAttribute('data-bs-slide', 'next');
             nextBtn.innerHTML = '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
-            
+
             // Assemble carousel
             carousel.appendChild(indicators);
             carousel.appendChild(carouselInner);
@@ -305,7 +305,7 @@ const modalDetails = document.getElementById('modal-details');
             modalDetails.appendChild(carousel);
         }
     }
-    
+
     // === GAME INFO SECTION ===
 
     // Create two-column layout
@@ -338,7 +338,7 @@ const modalDetails = document.getElementById('modal-details');
     const classInfoP = document.createElement('p');
     classInfoP.className = 'text-muted mb-1';
     const classNumberText = project.classNumber ? `${project.classNumber} - ` : '';
-    const courseNameText = project.courseName ? `<em>${project.courseName}</em>` : ''; 
+    const courseNameText = project.courseName ? `<em>${project.courseName}</em>` : '';
     classInfoP.innerHTML = `${classNumberText} ${courseNameText}`;
     leftCol.appendChild(classInfoP);
 
@@ -364,7 +364,7 @@ const modalDetails = document.getElementById('modal-details');
         leftCol.appendChild(assignmentP);
     }
 
-  // Keywords
+    // Keywords
     const keywordsP = document.createElement('p');
     keywordsP.className = 'mb-3';
     keywordsP.innerHTML = '<strong>Keywords:</strong> ';
@@ -406,16 +406,16 @@ const modalDetails = document.getElementById('modal-details');
     rightCol.appendChild(genreHeading);
     rightCol.appendChild(genreText);
 
-      // Brief Description 
+    // Brief Description 
     if (project.briefDescription) {
         const briefHeading = document.createElement('h6');
         briefHeading.className = 'text-info mb-2';
         briefHeading.innerHTML = '<i class="fas fa-comment-dots"></i> Quick Summary';
-        
+
         const briefText = document.createElement('p');
         briefText.className = 'fw-bold mb-3';
         briefText.textContent = project.briefDescription;
-        
+
         rightCol.appendChild(briefHeading);
         rightCol.appendChild(briefText);
     }
@@ -435,7 +435,7 @@ const modalDetails = document.getElementById('modal-details');
     infoRow.appendChild(leftCol);
     infoRow.appendChild(rightCol);
     modalDetails.appendChild(infoRow);
-    
+
     // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
     if (project.videoLink) {
@@ -471,13 +471,13 @@ const modalDetails = document.getElementById('modal-details');
     async function addDeleteButton(projectID) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const footer = document.querySelector('#projectModal .modal-footer');
-        
+
         // Remove existing delete button if any
         const existingDeleteBtn = document.getElementById('modal-delete-btn');
         if (existingDeleteBtn) {
             existingDeleteBtn.remove();
         }
-        
+
         if (session) {
             // User is authenticated, show delete button
             const deleteBtn = document.createElement('button');
@@ -485,7 +485,7 @@ const modalDetails = document.getElementById('modal-details');
             deleteBtn.className = 'btn btn-danger me-auto';
             deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Project';
             deleteBtn.onclick = () => confirmDelete(projectID);
-            
+
             // Insert at the beginning of footer
             footer.insertBefore(deleteBtn, footer.firstChild);
         }
@@ -495,10 +495,10 @@ const modalDetails = document.getElementById('modal-details');
         if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
             return;
         }
-        
+
         const project = allProjects.find(g => g.id === projectID);
         if (!project) return;
-        
+
         try {
             // Step 1: Delete images from storage
             if (project.image_urls && project.image_urls.length > 0) {
@@ -506,33 +506,33 @@ const modalDetails = document.getElementById('modal-details');
                     // Extract filename from URL
                     const urlParts = imageUrl.split('/');
                     const filename = urlParts[urlParts.length - 1];
-                    
+
                     const { error: storageError } = await supabaseClient.storage
                         .from('project-images')
                         .remove([filename]);
-                    
+
                     if (storageError) {
                         console.error('Error deleting image:', storageError);
                     }
                 }
             }
-            
+
             // Step 2: Delete project record from database
             const { error: dbError } = await supabaseClient
                 .from(TABLES.projects)
                 .delete()
                 .eq('id', projectID);
-            
+
             if (dbError) throw dbError;
-            
+
             // Step 3: Update UI
             allProjects = allProjects.filter(g => g.id !== projectID);
             renderProjects(allProjects);
-            
+
             // Close modal and show success
             projectModal.hide();
             alert('Project deleted successfully!');
-            
+
         } catch (error) {
             console.error('Delete error:', error);
             alert('Failed to delete project: ' + error.message);
@@ -548,10 +548,10 @@ const modalDetails = document.getElementById('modal-details');
 function showImageOverlay(imageSrc) {
     const overlay = document.getElementById('image-overlay');
     const overlayImg = document.getElementById('overlay-image');
-    
+
     overlayImg.src = imageSrc;
     overlay.style.display = 'block';
-    
+
     // Remove focus from modal to prevent aria-hidden warning
     document.activeElement.blur();
 
@@ -572,7 +572,7 @@ document.addEventListener('keydown', (e) => {
 function showVideoOverlay(videoUrl) {
     const overlay = document.getElementById('video-overlay');
     const videoFrame = document.getElementById('overlay-video');
-    
+
     // Convert YouTube URL to embed format if needed
     let embedUrl = videoUrl;
     if (videoUrl.includes('youtube.com/watch')) {
@@ -585,10 +585,10 @@ function showVideoOverlay(videoUrl) {
         const videoId = videoUrl.split('vimeo.com/')[1].split('?')[0];
         embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
     }
-    
+
     videoFrame.src = embedUrl;
     overlay.style.display = 'block';
-    
+
     // Close on click (but not on the video itself)
     overlay.onclick = (e) => {
         if (e.target === overlay || e.target.classList.contains('video-overlay-close')) {
@@ -609,7 +609,33 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Load institutions for filter dropdown
+async function loadInstitutions() {
+    try {
+        const { data: institutions, error } = await supabaseClient
+            .from(TABLES.institutions)
+            .select('institutionname')
+            .order('institutionname');
+
+        if (error) {
+            console.error('Error loading institutions:', error);
+            return;
+        }
+
+        const select = document.getElementById('filter-institution');
+        institutions.forEach(inst => {
+            const option = document.createElement('option');
+            option.value = inst.institutionname;
+            option.textContent = inst.institutionname;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading institutions:', error);
+    }
+}
+
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {
     fetchProjects(); // Fetch real data instead of using the array
+    loadInstitutions(); // Load institutions for filter
 });
