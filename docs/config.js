@@ -14,7 +14,8 @@ const TABLES = {
     institutions: IS_DEV ? '_institutions_dev' : 'institutions',
     people: IS_DEV ? '_people_dev' : 'people',
     people_projects: IS_DEV ? '_people_projects_dev' : 'people_projects',
-    invites: IS_DEV ? '_invites_dev' : 'invites'
+    invites: IS_DEV ? '_invites_dev' : 'invites',
+    keywords: IS_DEV ? '_keywords_dev' : 'keywords'
 };
 
 // Storage bucket (optional - could also have games-images-dev)

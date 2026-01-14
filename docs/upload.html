@@ -176,7 +176,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Instructor(s)</label>
                                     <div class="tag-input-container" id="instructors-container">
-                                        <input type="text" id="instructors-input"
+                                        <input type="text" id="instructors-input" list="people-list"
                                             placeholder="Type name and press Enter"
                                             style="border: none; outline: none; flex: 1; min-width: 150px;">
                                     </div>
@@ -199,9 +199,13 @@
                                 <div class="mb-3">
                                     <label class="form-label">Creators <span class="text-danger">*</span></label>
                                     <div class="tag-input-container" id="creators-container">
-                                        <input type="text" id="creators-input" placeholder="Type name and press Enter"
+                                        <input type="text" id="creators-input" list="people-list"
+                                            placeholder="Type name and press Enter"
                                             style="border: none; outline: none; flex: 1; min-width: 150px;">
                                     </div>
+                                    <datalist id="people-list">
+                                        <!-- Populated dynamically from database -->
+                                    </datalist>
                                     <small class="text-muted">Press Enter after each name</small>
                                 </div>
 
@@ -209,10 +213,13 @@
                                 <div class="mb-3">
                                     <label class="form-label">Keywords</label>
                                     <div class="tag-input-container" id="keywords-container">
-                                        <input type="text" id="keywords-input"
+                                        <input type="text" id="keywords-input" list="keywords-list"
                                             placeholder="Type keyword and press Enter"
                                             style="border: none; outline: none; flex: 1; min-width: 150px;">
                                     </div>
+                                    <datalist id="keywords-list">
+                                        <!-- Populated dynamically from database -->
+                                    </datalist>
                                     <small class="text-muted">Press Enter after each keyword</small>
                                 </div>
 
@@ -313,6 +320,29 @@
             </div>
         </div>
     </main>
+
+    <!-- Keyword Confirmation Modal -->
+    <div class="modal fade" id="keywordConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-tag me-2"></i>New Keyword</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">The keyword <strong id="new-keyword-text"></strong> doesn't exist yet.</p>
+                    <p class="text-muted mb-0">Do you want to create it?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirm-keyword-btn">
+                        <i class="fas fa-plus me-2"></i>Create Keyword
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-light text-center p-3 mt-5 border-top">
         <p class="mb-0">&copy; 2025 Student Game Archive. Powered by open source projects.</p>

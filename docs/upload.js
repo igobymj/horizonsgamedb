@@ -38,16 +38,39 @@ let techUsed = [];
 function setupTagInput(inputId, containerId, storageArray) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(containerId);
+    const isKeywordInput = inputId === 'keywords-input';
 
-    input.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const value = input.value.trim();
+            let value = input.value.trim();
+
+            // Normalize keywords (lowercase)
+            if (isKeywordInput) {
+                value = value.toLowerCase();
+            }
 
             if (value && !storageArray.includes(value)) {
+                // For keywords, check if it's new and confirm
+                if (isKeywordInput) {
+                    const isNew = await isNewKeyword(value);
+                    if (isNew) {
+                        const confirmed = await showKeywordConfirmModal(value);
+                        if (!confirmed) {
+                            input.value = '';
+                            return;
+                        }
+                    }
+                }
+
                 storageArray.push(value);
                 addTag(value, container, input, storageArray);
                 input.value = '';
+
+                // Auto-insert new keyword to database
+                if (isKeywordInput) {
+                    await insertKeywordIfNew(value);
+                }
             }
         }
     });
@@ -230,30 +253,84 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         progressBar.style.width = '70%';
 
         const projectData = {
-            projectTitle: document.getElementById('projectTitle').value.trim(),
-            genre: document.getElementById('genre').value,
+            title: document.getElementById('gameTitle').value.trim(),
+            genre: document.getElementById('gameGenre').value,
             year: parseInt(document.getElementById('year').value),
             term: document.getElementById('term').value,
-            institution: document.getElementById('institution').value,
-            instructors: instructors,
-            classNumber: document.getElementById('classNumber').value.trim() || null,
-            courseName: document.getElementById('courseName').value.trim() || null,
-            briefDescription: document.getElementById('briefDescription').value.trim() || null,
-            techUsed: techUsed,
-            creators: creators,
+            institution_id: null, // Will be set after institution lookup
+            classnumber: document.getElementById('classNumber').value.trim() || null,
+            coursename: document.getElementById('courseName').value.trim() || null,
+            assignment: document.getElementById('assignment').value.trim() || null,
+            briefdescription: document.getElementById('briefDescription').value.trim() || null,
+            fulldescription: document.getElementById('description').value.trim() || null,
             keywords: keywords,
-            description: document.getElementById('description').value.trim() || null,
-            videoLink: document.getElementById('videoLink').value.trim() || null,
-            downloadLink: document.getElementById('downloadLink').value.trim() || null,
-            repoLink: document.getElementById('repoLink').value.trim() || null,
+            techused: techUsed,
+            videolink: document.getElementById('videoLink').value.trim() || null,
+            downloadlink: document.getElementById('downloadLink').value.trim() || null,
+            repolink: document.getElementById('repoLink').value.trim() || null,
             image_urls: imageUrls
         };
 
-        const { error: dbError } = await supabaseClient
+        // Lookup institution_id
+        const institutionName = document.getElementById('institution').value;
+        const { data: institutionData } = await supabaseClient
+            .from(TABLES.institutions)
+            .select('id')
+            .ilike('institutionname', institutionName)
+            .single();
+
+        if (institutionData) {
+            projectData.institution_id = institutionData.id;
+        }
+
+
+        const { data: insertedProject, error: dbError } = await supabaseClient
             .from(TABLES.projects)
-            .insert([projectData]);
+            .insert([projectData])
+            .select()
+            .single();
 
         if (dbError) throw dbError;
+
+        const projectId = insertedProject.id;
+
+        // Insert creators into junction table
+        for (const creatorName of creators) {
+            const { data: personData } = await supabaseClient
+                .from(TABLES.people)
+                .select('id')
+                .ilike('name', creatorName)
+                .single();
+
+            if (personData) {
+                await supabaseClient
+                    .from(TABLES.people_projects)
+                    .insert([{
+                        project_id: projectId,
+                        person_id: personData.id,
+                        role: 'creator'
+                    }]);
+            }
+        }
+
+        // Insert instructors into junction table
+        for (const instructorName of instructors) {
+            const { data: personData } = await supabaseClient
+                .from(TABLES.people)
+                .select('id')
+                .ilike('name', instructorName)
+                .single();
+
+            if (personData) {
+                await supabaseClient
+                    .from(TABLES.people_projects)
+                    .insert([{
+                        project_id: projectId,
+                        person_id: personData.id,
+                        role: 'instructor'
+                    }]);
+            }
+        }
 
         // Success!
         progressBar.style.width = '100%';
@@ -304,6 +381,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load institutions
     loadInstitutions();
 
+    // Load keywords
+    loadKeywords();
+
+    // Load people
+    loadPeople();
+
     // Setup tag inputs
     setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
@@ -334,5 +417,131 @@ async function loadInstitutions() {
         });
     } catch (error) {
         console.error('Error loading institutions:', error);
+    }
+}
+
+// Load keywords for autocomplete
+async function loadKeywords() {
+    try {
+        const { data: keywordsList, error } = await supabaseClient
+            .from(TABLES.keywords)
+            .select('keyword')
+            .order('keyword');
+
+        if (error) {
+            console.error('Error loading keywords:', error);
+            return;
+        }
+
+        const datalist = document.getElementById('keywords-list');
+        keywordsList.forEach(kw => {
+            const option = document.createElement('option');
+            option.value = kw.keyword;
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading keywords:', error);
+    }
+}
+
+// Show keyword confirmation modal
+function showKeywordConfirmModal(keyword) {
+    return new Promise((resolve) => {
+        const modal = new bootstrap.Modal(document.getElementById('keywordConfirmModal'));
+        const keywordText = document.getElementById('new-keyword-text');
+        const confirmBtn = document.getElementById('confirm-keyword-btn');
+
+        keywordText.textContent = `"${keyword}"`;
+
+        // Handle confirm
+        const handleConfirm = () => {
+            modal.hide();
+            cleanup();
+            resolve(true);
+        };
+
+        // Handle cancel/close
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        // Cleanup listeners
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            document.getElementById('keywordConfirmModal').removeEventListener('hidden.bs.modal', handleCancel);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        document.getElementById('keywordConfirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+        modal.show();
+    });
+}
+
+// Check if keyword is new (doesn't exist in database)
+async function isNewKeyword(keyword) {
+    try {
+        const { data, error } = await supabaseClient
+            .from(TABLES.keywords)
+            .select('keyword')
+            .eq('keyword', keyword)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error checking keyword:', error);
+            return false; // Assume it exists on error to be safe
+        }
+
+        return !data; // Returns true if keyword doesn't exist
+    } catch (error) {
+        console.error('Error checking keyword:', error);
+        return false;
+    }
+}
+
+// Load people for autocomplete (creators and instructors)
+async function loadPeople() {
+    try {
+        const { data: peopleList, error } = await supabaseClient
+            .from(TABLES.people)
+            .select('name')
+            .order('name');
+
+        if (error) {
+            console.error('Error loading people:', error);
+            return;
+        }
+
+        const datalist = document.getElementById('people-list');
+        peopleList.forEach(person => {
+            const option = document.createElement('option');
+            option.value = person.name;
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading people:', error);
+    }
+}
+
+// Insert new keyword to database if it doesn't exist
+async function insertKeywordIfNew(keyword) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const { error } = await supabaseClient
+            .from(TABLES.keywords)
+            .insert([{
+                keyword: keyword,
+                created_by: session.user.id
+            }]);
+
+        // Ignore duplicate key errors (constraint violation)
+        if (error && !error.message.includes('duplicate') && error.code !== '23505') {
+            console.error('Error inserting keyword:', error);
+        }
+    } catch (error) {
+        console.error('Error inserting keyword:', error);
     }
 }

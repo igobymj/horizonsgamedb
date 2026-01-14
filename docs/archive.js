@@ -20,6 +20,44 @@ async function fetchProjects() {
 
         if (error) throw error;
 
+        // Fetch creators and instructors for each project
+        for (const project of data) {
+            // Fetch creators
+            const { data: creatorsData } = await supabaseClient
+                .from(TABLES.people_projects)
+                .select(`
+                    person_id,
+                    ${TABLES.people}!person_id(name)
+                `)
+                .eq('project_id', project.id)
+                .eq('role', 'creator');
+
+            project.creators = creatorsData ? creatorsData.map(c => c[TABLES.people].name) : [];
+
+            // Fetch instructors
+            const { data: instructorsData } = await supabaseClient
+                .from(TABLES.people_projects)
+                .select(`
+                    person_id,
+                    ${TABLES.people}!person_id(name)
+                `)
+                .eq('project_id', project.id)
+                .eq('role', 'instructor');
+
+            project.instructors = instructorsData ? instructorsData.map(i => i[TABLES.people].name) : [];
+
+            // Fetch institution name
+            if (project.institution_id) {
+                const { data: institutionData } = await supabaseClient
+                    .from(TABLES.institutions)
+                    .select('institutionname')
+                    .eq('id', project.institution_id)
+                    .single();
+
+                project.institution = institutionData ? institutionData.institutionname : null;
+            }
+        }
+
         allProjects = data;
         renderProjects(allProjects);
 
@@ -90,10 +128,10 @@ function renderProjects(projects) {
         leftContent.appendChild(title);
 
         // Brief Description (if available)
-        if (project.briefDescription) {
+        if (project.briefdescription) {
             const brief = document.createElement('p');
             brief.className = 'card-text text-muted fst-italic mb-2';
-            brief.textContent = project.briefDescription;
+            brief.textContent = project.briefdescription;
             leftContent.appendChild(brief);
         }
 
@@ -136,7 +174,7 @@ function renderProjects(projects) {
         // Class Number • Term Year
         const classTermYear = document.createElement('p');
         classTermYear.className = 'card-text mb-1 text-muted';
-        const classNumberText = project.classNumber ? `${project.classNumber} • ` : '';
+        const classNumberText = project.classnumber ? `${project.classnumber} • ` : '';
         classTermYear.textContent = `${classNumberText}${project.term} ${project.year}`;
 
         // Instructors
@@ -204,7 +242,7 @@ window.showProjectDetails = function (projectID) {
     const project = allProjects.find(g => g.id === projectID);
     if (!project) return;
 
-    const modalTitleElement = document.getElementById('projectModalLabel');
+    const modalTitleElement = document.getElementById('projectDetailModalLabel');
     modalTitleElement.textContent = project.title;
     modalTitleElement.className = 'modal-title fs-3 fw-bold';  // ADD THIS LINE
 
@@ -337,8 +375,8 @@ window.showProjectDetails = function (projectID) {
     // Class Number • Class Name
     const classInfoP = document.createElement('p');
     classInfoP.className = 'text-muted mb-1';
-    const classNumberText = project.classNumber ? `${project.classNumber} - ` : '';
-    const courseNameText = project.courseName ? `<em>${project.courseName}</em>` : '';
+    const classNumberText = project.classnumber ? `${project.classnumber} - ` : '';
+    const courseNameText = project.coursename ? `<em>${project.coursename}</em>` : '';
     classInfoP.innerHTML = `${classNumberText} ${courseNameText}`;
     leftCol.appendChild(classInfoP);
 
@@ -407,14 +445,14 @@ window.showProjectDetails = function (projectID) {
     rightCol.appendChild(genreText);
 
     // Brief Description 
-    if (project.briefDescription) {
+    if (project.briefdescription) {
         const briefHeading = document.createElement('h6');
         briefHeading.className = 'text-info mb-2';
         briefHeading.innerHTML = '<i class="fas fa-comment-dots"></i> Quick Summary';
 
         const briefText = document.createElement('p');
         briefText.className = 'fw-bold mb-3';
-        briefText.textContent = project.briefDescription;
+        briefText.textContent = project.briefdescription;
 
         rightCol.appendChild(briefHeading);
         rightCol.appendChild(briefText);
@@ -426,7 +464,7 @@ window.showProjectDetails = function (projectID) {
 
     const statementText = document.createElement('p');
     statementText.className = 'border-start border-3 border-success ps-3';
-    statementText.textContent = project.fullDescription || 'No statement provided.';
+    statementText.textContent = project.fulldescription || 'No statement provided.';
 
     rightCol.appendChild(statementHeading);
     rightCol.appendChild(statementText);
@@ -438,10 +476,10 @@ window.showProjectDetails = function (projectID) {
 
     // === UPDATE FOOTER LINKS ===
     const vidLink = document.getElementById('modal-video-link');
-    if (project.videoLink) {
+    if (project.videolink) {
         vidLink.onclick = (e) => {
             e.preventDefault();
-            showVideoOverlay(project.videoLink);
+            showVideoOverlay(project.videolink);
         };
         vidLink.classList.remove('disabled');
     } else {
@@ -450,11 +488,11 @@ window.showProjectDetails = function (projectID) {
     }
 
     const downloadLink = document.getElementById('modal-download-link');
-    downloadLink.href = project.downloadLink || '#';
-    downloadLink.classList.toggle('disabled', !project.downloadLink);
+    downloadLink.href = project.downloadlink || '#';
+    downloadLink.classList.toggle('disabled', !project.downloadlink);
 
     // Source link (dynamic creation)
-    const footer = document.querySelector('#projectModal .modal-footer');
+    const footer = document.querySelector('#projectDetailModal .modal-footer');
     let sourceBtn = document.getElementById('modal-source-link-temp');
     if (!sourceBtn) {
         sourceBtn = document.createElement('a');
@@ -464,13 +502,13 @@ window.showProjectDetails = function (projectID) {
         sourceBtn.target = '_blank';
         footer.insertBefore(sourceBtn, document.getElementById('modal-download-link'));
     }
-    sourceBtn.href = project.repoLink || '#';
-    sourceBtn.classList.toggle('disabled', !project.repoLink);
+    sourceBtn.href = project.repolink || '#';
+    sourceBtn.classList.toggle('disabled', !project.repolink);
 
     // Add delete button for authenticated users (at the end of showProjectDetails function)
     async function addDeleteButton(projectID) {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        const footer = document.querySelector('#projectModal .modal-footer');
+        const footer = document.querySelector('#projectDetailModal .modal-footer');
 
         // Remove existing delete button if any
         const existingDeleteBtn = document.getElementById('modal-delete-btn');
