@@ -43,7 +43,7 @@ function setupTagInput(inputId, containerId, storageArray) {
         if (e.key === 'Enter') {
             e.preventDefault();
             const value = input.value.trim();
-            
+
             if (value && !storageArray.includes(value)) {
                 storageArray.push(value);
                 addTag(value, container, input, storageArray);
@@ -56,10 +56,10 @@ function setupTagInput(inputId, containerId, storageArray) {
 function addTag(text, container, input, storageArray) {
     const tag = document.createElement('div');
     tag.className = 'tag';
-    
+
     const span = document.createElement('span');
     span.textContent = text;
-    
+
     const removeBtn = document.createElement('button');
     removeBtn.innerHTML = '&times;';
     removeBtn.type = 'button';
@@ -68,7 +68,7 @@ function addTag(text, container, input, storageArray) {
         if (index > -1) storageArray.splice(index, 1);
         tag.remove();
     };
-    
+
     tag.appendChild(span);
     tag.appendChild(removeBtn);
     container.insertBefore(tag, input);
@@ -80,22 +80,22 @@ document.getElementById('images').addEventListener('change', async (e) => {
     const files = Array.from(e.target.files);
     const previewContainer = document.getElementById('image-previews');
     const statusDiv = document.getElementById('compression-status');
-    
+
     if (files.length > 5) {
         alert('Maximum 5 images allowed');
         e.target.value = '';
         return;
     }
-    
+
     previewContainer.innerHTML = '';
     statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Compressing images...';
     compressedImages = [];
-    
+
     try {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const originalSize = (file.size / 1024 / 1024).toFixed(2);
-            
+
             // Compress image
             const options = {
                 maxSizeMB: 0.5,
@@ -103,10 +103,10 @@ document.getElementById('images').addEventListener('change', async (e) => {
                 useWebWorker: true,
                 fileType: 'image/jpeg'
             };
-            
+
             const compressedFile = await imageCompression(file, options);
             const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
-            
+
             // Store compressed file with metadata
             compressedImages.push({
                 file: compressedFile,
@@ -114,18 +114,18 @@ document.getElementById('images').addEventListener('change', async (e) => {
                 compressedSize: compressedSize,
                 name: file.name
             });
-            
+
             // Create preview
             const reader = new FileReader();
             reader.onload = (event) => {
                 const previewDiv = document.createElement('div');
                 previewDiv.className = 'image-preview';
-                
+
                 const img = document.createElement('img');
                 img.src = event.target.result;
                 img.alt = 'Preview';
                 img.className = 'border';
-                
+
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'remove-btn';
                 removeBtn.innerHTML = '&times;';
@@ -136,16 +136,16 @@ document.getElementById('images').addEventListener('change', async (e) => {
                     previewDiv.remove();
                     updateCompressionStatus();
                 };
-                
+
                 previewDiv.appendChild(img);
                 previewDiv.appendChild(removeBtn);
                 previewContainer.appendChild(previewDiv);
             };
             reader.readAsDataURL(compressedFile);
         }
-        
+
         updateCompressionStatus();
-        
+
     } catch (error) {
         console.error('Compression error:', error);
         statusDiv.innerHTML = '<span class="text-danger">Error compressing images</span>';
@@ -154,16 +154,16 @@ document.getElementById('images').addEventListener('change', async (e) => {
 
 function updateCompressionStatus() {
     const statusDiv = document.getElementById('compression-status');
-    
+
     if (compressedImages.length === 0) {
         statusDiv.innerHTML = '';
         return;
     }
-    
+
     const totalOriginal = compressedImages.reduce((sum, img) => sum + parseFloat(img.originalSize), 0);
     const totalCompressed = compressedImages.reduce((sum, img) => sum + parseFloat(img.compressedSize), 0);
     const savings = ((1 - totalCompressed / totalOriginal) * 100).toFixed(0);
-    
+
     statusDiv.innerHTML = `
         <i class="fas fa-check-circle text-success me-2"></i>
         ${compressedImages.length} image(s) compressed: 
@@ -176,69 +176,69 @@ function updateCompressionStatus() {
 
 document.getElementById('upload-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     // Validate creators
     if (creators.length === 0) {
         showError('Please add at least one creator');
         return;
     }
-    
+
     const submitBtn = document.getElementById('submit-btn');
     const progressDiv = document.getElementById('upload-progress');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
     const successDiv = document.getElementById('success-message');
     const errorDiv = document.getElementById('error-message');
-    
+
     // Disable form
     submitBtn.disabled = true;
     progressDiv.classList.remove('d-none');
     successDiv.classList.add('d-none');
     errorDiv.classList.add('d-none');
-    
+
     try {
         // Step 1: Upload images to Supabase Storage
         progressText.textContent = 'Uploading images...';
         progressBar.style.width = '30%';
-        
+
         const imageUrls = [];
-        
+
         for (let i = 0; i < compressedImages.length; i++) {
             const imgData = compressedImages[i];
             const timestamp = Date.now();
             const fileName = `${timestamp}_${i}_${imgData.name}`;
-            
+
             const { data, error } = await supabaseClient.storage
                 .from(STORAGE_BUCKETS.images)
                 .upload(fileName, imgData.file, {
                     cacheControl: '3600',
                     upsert: false
                 });
-            
+
             if (error) throw error;
-            
+
             // Get public URL
             const { data: urlData } = supabaseClient.storage
                 .from(STORAGE_BUCKETS.images)
                 .getPublicUrl(fileName);
-            
+
             imageUrls.push(urlData.publicUrl);
         }
-        
-        // Step 2: Insert game data into database
-        progressText.textContent = 'Saving game data...';
+
+        // Step 2: Insert project data into database
+        progressText.textContent = 'Saving project data...';
         progressBar.style.width = '70%';
-        
-        const gameData = {
-            gameTitle: document.getElementById('gameTitle').value.trim(),
-            gameGenre: document.getElementById('gameGenre').value,
+
+        const projectData = {
+            projectTitle: document.getElementById('projectTitle').value.trim(),
+            genre: document.getElementById('genre').value,
             year: parseInt(document.getElementById('year').value),
-            term: document.getElementById('term').value, 
+            term: document.getElementById('term').value,
             institution: document.getElementById('institution').value,
             instructors: instructors,
             classNumber: document.getElementById('classNumber').value.trim() || null,
-            courseName: document.getElementById('courseName').value.trim() || null,  
-            briefDescription: document.getElementById('briefDescription').value.trim() || null,  
+            courseName: document.getElementById('courseName').value.trim() || null,
+            briefDescription: document.getElementById('briefDescription').value.trim() || null,
             techUsed: techUsed,
             creators: creators,
             keywords: keywords,
@@ -248,17 +248,17 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             repoLink: document.getElementById('repoLink').value.trim() || null,
             image_urls: imageUrls
         };
-        
+
         const { error: dbError } = await supabaseClient
-            .from(TABLES.games)
-            .insert([gameData]);
-        
+            .from(TABLES.projects)
+            .insert([projectData]);
+
         if (dbError) throw dbError;
-        
+
         // Success!
         progressBar.style.width = '100%';
         progressText.textContent = 'Upload complete!';
-        
+
         setTimeout(() => {
             progressDiv.classList.add('d-none');
             successDiv.classList.remove('d-none');
@@ -270,7 +270,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             document.getElementById('image-previews').innerHTML = '';
             document.getElementById('compression-status').innerHTML = '';
         }, 500);
-        
+
     } catch (error) {
         console.error('Upload error:', error);
         showError(error.message || 'Upload failed. Please try again.');
@@ -284,7 +284,7 @@ function showError(message) {
     const errorText = document.getElementById('error-text');
     errorText.textContent = message;
     errorDiv.classList.remove('d-none');
-    
+
     // Scroll to error
     errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -292,15 +292,15 @@ function showError(message) {
 // ===== INITIALIZE =====
 
 document.addEventListener('DOMContentLoaded', async () => {
-     // Check auth first
+    // Check auth first
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) return;
-    
+
     // Setup logout button
     setupLogout();   // Set current year as default
     const currentYear = new Date().getFullYear();
     document.getElementById('year').value = currentYear;
-    
+
     // Setup tag inputs
     setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
