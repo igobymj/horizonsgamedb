@@ -25,7 +25,7 @@
             <div class="col-md-6 col-lg-5">
                 <div class="card shadow">
                     <div class="card-body p-4">
-                        <h2 class="h4 mb-4 text-center"><i class="fas fa-user-circle me-2"></i>Account Access</h2>
+                        <h2 id="account-heading" class="h4 mb-4 text-center"><i class="fas fa-user-circle me-2"></i>Your Account</h2>
                         
                         <!-- Tab Navigation -->
                         <ul class="nav nav-tabs mb-4" role="tablist">
@@ -59,19 +59,36 @@
                                 </form>
                             </div>
 
-                            <!-- Sign Up Panel -->
+                            <!-- Sign Up Panel (Invite-based) -->
                             <div class="tab-pane fade" id="signup-panel">
-                                <div class="text-center py-4">
-                                    <i class="fas fa-user-lock fa-3x text-muted mb-3"></i>
-                                    <h5 class="mb-3">Account Registration Closed</h5>
-                                    <p class="text-muted mb-4">
-                                        New account registration is currently restricted. 
-                                        If you need upload access, please contact MJ for login credentials.
-                                    </p>
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-envelope me-2"></i>
-                                        <strong>Contact:</strong> Reach out to MJ to request access
+                                <form id="signup-form">
+                                    <div class="mb-3">
+                                        <label for="signup-invite-code" class="form-label">Invitation Code</label>
+                                        <input type="text" class="form-control" id="signup-invite-code" placeholder="e.g., TEST-ABCD-EFGH" required>
+                                        <div id="invite-hint" class="form-text">Enter a valid invitation code sent to your email.</div>
                                     </div>
+
+                                    <div class="mb-3">
+                                        <label for="signup-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="signup-email" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="signup-password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="signup-password" required>
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary" id="signup-btn">
+                                            <i class="fas fa-user-plus me-2"></i>Sign Up
+                                        </button>
+                                    </div>
+
+                                    <div id="signup-message" class="alert mt-3 d-none" role="alert"></div>
+                                </form>
+
+                                <div class="text-center py-3">
+                                    <small class="text-muted">If you don't have a code, contact MJ to request access.</small>
                                 </div>
                             </div>
                         </div>

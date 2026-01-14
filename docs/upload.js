@@ -230,8 +230,8 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
         progressBar.style.width = '70%';
         
         const gameData = {
-            gameTitle: document.getElementById('gameTitle').value.trim(),
-            gameGenre: document.getElementById('gameGenre').value,
+            title: document.getElementById('gameTitle').value.trim(),
+            genre: document.getElementById('gameGenre').value,
             year: parseInt(document.getElementById('year').value),
             term: document.getElementById('term').value, 
             institution: document.getElementById('institution').value,
@@ -248,9 +248,12 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             repoLink: document.getElementById('repoLink').value.trim() || null,
             image_urls: imageUrls
         };
-        
+
+        // Helpful debug output to confirm payload shape before inserting
+        console.log('Uploading project payload:', gameData);
+
         const { error: dbError } = await supabaseClient
-            .from(TABLES.games)
+            .from(TABLES.projects)
             .insert([gameData]);
         
         if (dbError) throw dbError;
