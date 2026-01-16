@@ -14,11 +14,11 @@ async function checkAdminAuth() {
     // Check if user is admin by querying people table
     const { data: personData, error } = await supabaseClient
         .from(TABLES.people)
-        .select('type')
+        .select('user_type')
         .eq('email', session.user.email)
         .single();
 
-    if (error || !personData || personData.type !== 'admin') {
+    if (error || !personData || personData.user_type !== 'admin') {
         // Not an admin, redirect to index with error
         alert('Access denied. Admin privileges required.');
         window.location.href = 'index.html';

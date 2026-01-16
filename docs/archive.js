@@ -3,6 +3,49 @@ const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
 
 // Global variable to store games so search works instantly
 let allProjects = [];
+let currentProject = null; // Store current project for editing
+let isEditMode = false; // Track if modal is in edit mode
+
+// Check if user can edit a project
+async function canEditProject(projectId) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return false;
+
+    // Check if user is in people table
+    const { data: person, error: personError } = await supabaseClient
+        .from(TABLES.people)
+        .select('id, user_type')
+        .eq('email', session.user.email)
+        .maybeSingle();
+
+    if (personError) {
+        console.error('Error fetching person for edit check:', personError);
+        return false;
+    }
+
+    if (!person) {
+        console.log('No person found with email:', session.user.email);
+        return false;
+    }
+
+    // Admins can edit any project
+    if (person.user_type === 'admin') return true;
+
+    // Check if user is creator/instructor for this project (any role)
+    const { data: relations, error: relationError } = await supabaseClient
+        .from(TABLES.people_projects)
+        .select('role')
+        .eq('project_id', projectId)
+        .eq('person_id', person.id);
+
+    if (relationError) {
+        console.error('Error checking project relation:', relationError);
+        return false;
+    }
+
+    // User can edit if they have any relation to the project
+    return relations && relations.length > 0;
+}
 
 const resultsContainer = document.getElementById('project-results');
 const resultCountSpan = document.getElementById('result-count');
@@ -171,17 +214,21 @@ function renderProjects(projects) {
         institution.className = 'card-subtitle mb-2 text-muted';
         institution.textContent = project.institution;
 
-        // Class Number • Term Year
-        const classTermYear = document.createElement('p');
-        classTermYear.className = 'card-text mb-1 text-muted';
-        const classNumberText = project.classnumber ? `${project.classnumber} • ` : '';
-        classTermYear.textContent = `${classNumberText}${project.term} ${project.year}`;
-
         // Instructors
         const instructors = document.createElement('h6');
         instructors.className = 'card-subtitle mb-2 text-muted';
         instructors.innerHTML = '<strong>Instructor(s):</strong> ';
         instructors.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
+
+        // Course Name (italicized)
+        const courseName = document.createElement('p');
+        courseName.className = 'card-text mb-1 text-muted fst-italic';
+        courseName.textContent = project.coursename || 'Course not specified';
+
+        // Term and Year
+        const termYear = document.createElement('p');
+        termYear.className = 'card-text mb-1 text-muted';
+        termYear.textContent = `${project.term} ${project.year}`;
 
         // Keywords (badges)
         const keywordDiv = document.createElement('div');
@@ -203,7 +250,7 @@ function renderProjects(projects) {
         btnContainer.appendChild(btn);
 
         // Assemble everything
-        cardBody.append(headerRow, institution, classTermYear, instructors, keywordDiv, btnContainer);
+        cardBody.append(headerRow, institution, instructors, courseName, termYear, keywordDiv, btnContainer);
         card.appendChild(cardBody);
         col.appendChild(card);
         resultsContainer.appendChild(col);
@@ -633,6 +680,247 @@ window.showProjectDetails = function (projectID) {
     addDeleteButton(project.id);
 
     projectModal.show();
+
+    // Store current project for editing
+    currentProject = project;
+
+    // Check if user can edit and show edit button
+    canEditProject(projectID).then(canEdit => {
+        const editBtn = document.getElementById('edit-project-btn');
+        if (canEdit) {
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.style.display = 'none';
+        }
+    });
+}
+
+// Toggle edit mode for project modal
+function toggleEditMode(enable) {
+    isEditMode = enable;
+
+    const editBtn = document.getElementById('edit-project-btn');
+    const saveBtn = document.getElementById('save-project-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const closeBtn = document.getElementById('close-modal-btn');
+    const modalVideoLink = document.getElementById('modal-video-link');
+    const modalDownloadLink = document.getElementById('modal-download-link');
+
+    // Check if all elements exist
+    if (!editBtn || !saveBtn || !cancelBtn || !closeBtn) {
+        console.error('Edit mode buttons not found in DOM');
+        return;
+    }
+
+    if (enable) {
+        // Switch to edit mode
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+        closeBtn.style.display = 'none';
+        if (modalVideoLink) modalVideoLink.style.display = 'none';
+        if (modalDownloadLink) modalDownloadLink.style.display = 'none';
+
+        // Convert modal content to editable
+        convertToEditMode();
+    } else {
+        // Switch to view mode
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        closeBtn.style.display = 'inline-block';
+        if (modalVideoLink) modalVideoLink.style.display = 'inline-block';
+        if (modalDownloadLink) modalDownloadLink.style.display = 'inline-block';
+    }
+}
+
+// Convert modal content to editable fields
+function convertToEditMode() {
+    if (!currentProject) return;
+
+    // Make modal title editable
+    const modalTitle = document.getElementById('projectDetailModalLabel');
+    if (modalTitle && !modalTitle.querySelector('input')) {
+        const currentTitle = modalTitle.textContent;
+        modalTitle.innerHTML = '';
+
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'form-control form-control-lg';
+        titleInput.value = currentTitle;
+        titleInput.id = 'edit-title';
+        titleInput.style.fontSize = 'inherit';
+        titleInput.style.fontWeight = 'inherit';
+
+        modalTitle.appendChild(titleInput);
+    }
+
+    // Make text fields editable by finding them and converting to inputs/textareas
+    const modalDetails = document.getElementById('modal-details');
+
+    // Find and convert brief description
+    const briefElements = Array.from(modalDetails.querySelectorAll('p')).filter(p =>
+        p.textContent === currentProject.briefdescription
+    );
+    if (briefElements.length > 0) {
+        const briefP = briefElements[0];
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.value = currentProject.briefdescription || '';
+        textarea.rows = 2;
+        textarea.id = 'edit-brief';
+        briefP.replaceWith(textarea);
+    }
+
+    // Find and convert full description (artist's statement)
+    const descElements = Array.from(modalDetails.querySelectorAll('p')).filter(p =>
+        p.textContent === (currentProject.fulldescription || 'No statement provided.')
+    );
+    if (descElements.length > 0) {
+        const descP = descElements[0];
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control border-start border-3 border-success ps-3';
+        textarea.value = currentProject.fulldescription || '';
+        textarea.rows = 6;
+        textarea.id = 'edit-description';
+        descP.replaceWith(textarea);
+    }
+
+    // Find and convert assignment, class info, term, year
+    const textElements = modalDetails.querySelectorAll('p.fw-bold');
+    textElements.forEach(p => {
+        const text = p.textContent.trim();
+
+        // Assignment
+        if (text === (currentProject.assignment || 'Not specified')) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.value = currentProject.assignment || '';
+            input.id = 'edit-assignment';
+            input.placeholder = 'Assignment name';
+            p.replaceWith(input);
+        }
+        // Class info
+        else if (text === (currentProject.classinfo || 'Not specified')) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.value = currentProject.classinfo || '';
+            input.id = 'edit-classinfo';
+            input.placeholder = 'Class name';
+            p.replaceWith(input);
+        }
+        // Term
+        else if (text === (currentProject.term || 'Not specified')) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.value = currentProject.term || '';
+            input.id = 'edit-term';
+            input.placeholder = 'Term (e.g., Fall 2024)';
+            p.replaceWith(input);
+        }
+        // Year
+        else if (text === String(currentProject.year || 'Not specified')) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control';
+            input.value = currentProject.year || '';
+            input.id = 'edit-year';
+            input.placeholder = 'Year';
+            input.min = '1900';
+            input.max = '2100';
+            p.replaceWith(input);
+        }
+    });
+
+    // Find and convert game URL
+    const gameUrlElements = Array.from(modalDetails.querySelectorAll('a')).filter(a =>
+        a.href === (currentProject.gameurl || '#')
+    );
+    if (gameUrlElements.length > 0) {
+        const link = gameUrlElements[0];
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.className = 'form-control';
+        input.value = currentProject.gameurl || '';
+        input.id = 'edit-gameurl';
+        input.placeholder = 'https://...';
+        link.replaceWith(input);
+    }
+
+    console.log('Edit mode enabled - all text fields are now editable');
+}
+
+// Save project changes
+async function saveProjectChanges() {
+    if (!currentProject) return;
+
+    try {
+        // Collect edited values
+        const titleInput = document.getElementById('edit-title');
+        const briefInput = document.getElementById('edit-brief');
+        const descInput = document.getElementById('edit-description');
+        const assignmentInput = document.getElementById('edit-assignment');
+        const classinfoInput = document.getElementById('edit-classinfo');
+        const termInput = document.getElementById('edit-term');
+        const yearInput = document.getElementById('edit-year');
+        const gameurlInput = document.getElementById('edit-gameurl');
+
+        if (!titleInput) {
+            alert('Title field not found');
+            return;
+        }
+
+        const newTitle = titleInput.value.trim();
+
+        if (!newTitle) {
+            alert('Title cannot be empty');
+            return;
+        }
+
+        // Build update object with all edited fields
+        const updateData = {
+            title: newTitle,
+            briefdescription: briefInput ? briefInput.value.trim() || null : currentProject.briefdescription,
+            fulldescription: descInput ? descInput.value.trim() || null : currentProject.fulldescription,
+            assignment: assignmentInput ? assignmentInput.value.trim() || null : currentProject.assignment,
+            classinfo: classinfoInput ? classinfoInput.value.trim() || null : currentProject.classinfo,
+            term: termInput ? termInput.value.trim() || null : currentProject.term,
+            year: yearInput ? (yearInput.value ? parseInt(yearInput.value) : null) : currentProject.year,
+            gameurl: gameurlInput ? gameurlInput.value.trim() || null : currentProject.gameurl
+        };
+
+        // Update project in database
+        const { error } = await supabaseClient
+            .from(TABLES.projects)
+            .update(updateData)
+            .eq('id', currentProject.id);
+
+        if (error) {
+            console.error('Error saving project:', error);
+            alert('Error saving changes: ' + error.message);
+            return;
+        }
+
+        // Update local project data
+        Object.assign(currentProject, updateData);
+        const projectIndex = allProjects.findIndex(p => p.id === currentProject.id);
+        if (projectIndex !== -1) {
+            Object.assign(allProjects[projectIndex], updateData);
+        }
+
+        // Exit edit mode and reload project details
+        toggleEditMode(false);
+        window.showProjectDetails(currentProject.id);
+
+        alert('Changes saved successfully!');
+
+    } catch (error) {
+        console.error('Error saving project:', error);
+        alert('Error saving changes');
+    }
 }
 
 // Image overlay functionality
@@ -963,6 +1251,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('upload-link').style.display = 'inline-block';
         document.getElementById('profile-link').style.display = 'inline-block';
         document.getElementById('logout-btn').style.display = 'inline-block';
+
+        // Fetch and display user's name
+        const { data: person, error: personError } = await supabaseClient
+            .from(TABLES.people)
+            .select('name')
+            .eq('email', session.user.email)
+            .maybeSingle();
+
+        if (personError) {
+            console.error('Error fetching user name:', personError);
+        }
+
+        if (person && person.name) {
+            document.getElementById('user-name').textContent = person.name;
+            document.getElementById('user-greeting').style.display = 'inline-block';
+        }
     }
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
@@ -986,4 +1290,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'login.html';
         });
     }
+
+    // Edit mode buttons
+    document.getElementById('edit-project-btn').addEventListener('click', () => {
+        toggleEditMode(true);
+    });
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+        if (confirm('Discard all changes?')) {
+            toggleEditMode(false);
+            // Reload project details
+            if (currentProject) {
+                window.showProjectDetails(currentProject.id);
+            }
+        }
+    });
+
+    document.getElementById('save-project-btn').addEventListener('click', () => {
+        saveProjectChanges();
+    });
 });

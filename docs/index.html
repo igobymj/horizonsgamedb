@@ -34,7 +34,10 @@
     <header class="bg-dark text-white p-4 mb-4 shadow position-relative">
         <div class="container d-flex justify-content-between align-items-center">
             <h1 class="h3 mb-0"><i class="fas fa-gamepad"></i> Indiecade Horizons Student Game Archive</h1>
-            <nav id="nav-links">
+            <nav id="nav-links" class="d-flex align-items-center">
+                <span id="user-greeting" class="text-white-50 me-3" style="display:none;">
+                    <small>Hello, <span id="user-name"></span></small>
+                </span>
                 <a href="login.html" id="login-link" class="btn btn-outline-light"><i class="fas fa-sign-in-alt"></i>
                     Login</a>
                 <a href="upload.html" id="upload-link" class="btn btn-outline-light me-2" style="display:none;"><i
@@ -132,7 +135,17 @@
                 <div class="modal-footer">
                     <a id="modal-video-link" href="#" target="_blank" class="btn btn-danger me-auto"><i
                             class="fab fa-youtube"></i> Watch Trailer</a>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="edit-project-btn" class="btn btn-warning" style="display:none;">
+                        <i class="fas fa-edit"></i> Edit Project
+                    </button>
+                    <button type="button" id="save-project-btn" class="btn btn-success" style="display:none;">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button type="button" id="cancel-edit-btn" class="btn btn-secondary" style="display:none;">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        id="close-modal-btn">Close</button>
                     <a id="modal-download-link" href="#" target="_blank" class="btn btn-success"><i
                             class="fas fa-download"></i> Download Game</a>
                 </div>
