@@ -12,20 +12,6 @@ async function checkAuth() {
     return true;
 }
 
-// Add logout functionality
-function setupLogout() {
-    // Create logout button in header
-    const header = document.querySelector('header .container');
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'btn btn-sm btn-outline-light float-end';
-    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt me-2"></i>Logout';
-    logoutBtn.onclick = async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = 'login.html';
-    };
-    header.querySelector('h1').appendChild(logoutBtn);
-}
-
 // Storage for tags and compressed images
 let creators = [];
 let keywords = [];
@@ -385,8 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) return;
 
-    // Setup logout button
-    setupLogout();   // Set current year as default
+    // Set current year as default
     const currentYear = new Date().getFullYear();
     document.getElementById('year').value = currentYear;
 
@@ -408,6 +393,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTagInput('keywords-input', 'keywords-container', keywords);
     setupTagInput('genres-input', 'genres-container', genres);
     setupTagInput('techUsed-input', 'techUsed-container', techUsed);
+
+    // Logout button
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+    });
 
 });
 

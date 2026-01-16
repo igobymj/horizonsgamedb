@@ -32,9 +32,18 @@
     </div>
 
     <header class="bg-dark text-white p-4 mb-4 shadow position-relative">
-        <div class="container">
-            <h1 class="display-5"><i class="fas fa-gamepad me-2"></i>Indiecade Horizons Student Game Archive</h1>
-            <p class="lead">A curated collection of student-made video games and interactive projects.</p>
+        <div class="container d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0"><i class="fas fa-gamepad"></i> Indiecade Horizons Student Game Archive</h1>
+            <nav id="nav-links">
+                <a href="login.html" id="login-link" class="btn btn-outline-light"><i class="fas fa-sign-in-alt"></i>
+                    Login</a>
+                <a href="upload.html" id="upload-link" class="btn btn-outline-light me-2" style="display:none;"><i
+                        class="fas fa-upload"></i> Upload New Project</a>
+                <a href="profile.html" id="profile-link" class="btn btn-outline-light me-2" style="display:none;"><i
+                        class="fas fa-user-edit"></i> Profile</a>
+                <button id="logout-btn" class="btn btn-outline-danger" style="display:none;"><i
+                        class="fas fa-sign-out-alt"></i> Logout</button>
+            </nav>
         </div>
     </header>
 
@@ -152,8 +161,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="config.js"></script>
     <script src="archive.js"></script>
-    <!-- Handles authentication UI logic for user sign-in/sign-up via Supabase -->
-    <script src="auth-ui.js"></script>
     <!-- Image Overlay -->
     <div id="image-overlay" class="image-overlay">
         <span class="image-overlay-close">&times;</span>

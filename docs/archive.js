@@ -792,12 +792,6 @@ window.showUserProfile = async function (personName) {
             return;
         }
 
-        // Check if profile is public
-        if (!person.is_public) {
-            alert('This profile is private');
-            return;
-        }
-
         // Fetch person's projects
         const { data: projectRelations, error: projectsError } = await supabaseClient
             .from(TABLES.people_projects)
@@ -816,89 +810,89 @@ window.showUserProfile = async function (personName) {
         const container = document.createElement('div');
         container.className = 'row';
 
-        // Left column - Basic info
+        // Left column - Basic info (only if public)
         const leftCol = document.createElement('div');
         leftCol.className = 'col-md-6';
 
-        if (person.bio) {
-            const bioHeading = document.createElement('h6');
-            bioHeading.className = 'text-primary mb-2';
-            bioHeading.innerHTML = '<i class="fas fa-user"></i> About';
+        if (!person.is_public) {
+            // Show privacy message
+            const privateMsg = document.createElement('p');
+            privateMsg.className = 'text-muted fst-italic';
+            privateMsg.textContent = 'Profile details not public';
+            leftCol.appendChild(privateMsg);
+        } else {
+            // Show full profile details
+            if (person.bio) {
+                const bioHeading = document.createElement('h6');
+                bioHeading.className = 'text-primary mb-2';
+                bioHeading.innerHTML = '<i class="fas fa-user"></i> About';
 
-            const bioText = document.createElement('p');
-            bioText.textContent = person.bio;
+                const bioText = document.createElement('p');
+                bioText.textContent = person.bio;
 
-            leftCol.appendChild(bioHeading);
-            leftCol.appendChild(bioText);
+                leftCol.appendChild(bioHeading);
+                leftCol.appendChild(bioText);
+            }
+
+            // Education info
+            if (person.degree || person.graduation_year || person.institution) {
+                const eduHeading = document.createElement('h6');
+                eduHeading.className = 'text-primary mb-2 mt-3';
+                eduHeading.innerHTML = '<i class="fas fa-graduation-cap"></i> Education';
+
+                const eduText = document.createElement('p');
+                const eduParts = [];
+                if (person.degree) eduParts.push(person.degree);
+                if (person.institution?.institutionname) eduParts.push(person.institution.institutionname);
+                if (person.graduation_year) eduParts.push(`Class of ${person.graduation_year}`);
+                eduText.textContent = eduParts.join(' • ');
+
+                leftCol.appendChild(eduHeading);
+                leftCol.appendChild(eduText);
+            }
+
+            // Links
+            const hasLinks = person.website || person.linkedin_url || person.social_media_url;
+            if (hasLinks) {
+                const linksHeading = document.createElement('h6');
+                linksHeading.className = 'text-primary mb-2 mt-3';
+                linksHeading.innerHTML = '<i class="fas fa-link"></i> Links';
+
+                const linksDiv = document.createElement('div');
+
+                if (person.website) {
+                    const link = document.createElement('a');
+                    link.href = person.website;
+                    link.target = '_blank';
+                    link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                    link.innerHTML = '<i class="fas fa-globe"></i> Website';
+                    linksDiv.appendChild(link);
+                }
+
+                if (person.linkedin_url) {
+                    const link = document.createElement('a');
+                    link.href = person.linkedin_url;
+                    link.target = '_blank';
+                    link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                    link.innerHTML = '<i class="fab fa-linkedin"></i> LinkedIn';
+                    linksDiv.appendChild(link);
+                }
+
+                if (person.social_media_url) {
+                    const link = document.createElement('a');
+                    link.href = person.social_media_url;
+                    link.target = '_blank';
+                    link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                    link.innerHTML = '<i class="fas fa-share-alt"></i> Social';
+                    linksDiv.appendChild(link);
+                }
+
+                leftCol.appendChild(linksHeading);
+                leftCol.appendChild(linksDiv);
+            }
         }
 
-        // Education info
-        if (person.degree || person.graduation_year || person.institution) {
-            const eduHeading = document.createElement('h6');
-            eduHeading.className = 'text-primary mb-2 mt-3';
-            eduHeading.innerHTML = '<i class="fas fa-graduation-cap"></i> Education';
-
-            const eduText = document.createElement('p');
-            const eduParts = [];
-            if (person.degree) eduParts.push(person.degree);
-            if (person.institution?.institutionname) eduParts.push(person.institution.institutionname);
-            if (person.graduation_year) eduParts.push(`Class of ${person.graduation_year}`);
-            eduText.textContent = eduParts.join(' • ');
-
-            leftCol.appendChild(eduHeading);
-            leftCol.appendChild(eduText);
-        }
-
-        // Links
-        const hasLinks = person.website || person.portfolio_url || person.linkedin_url || person.social_media_url;
-        if (hasLinks) {
-            const linksHeading = document.createElement('h6');
-            linksHeading.className = 'text-primary mb-2 mt-3';
-            linksHeading.innerHTML = '<i class="fas fa-link"></i> Links';
-
-            const linksDiv = document.createElement('div');
-
-            if (person.website) {
-                const link = document.createElement('a');
-                link.href = person.website;
-                link.target = '_blank';
-                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-                link.innerHTML = '<i class="fas fa-globe"></i> Website';
-                linksDiv.appendChild(link);
-            }
-
-            if (person.portfolio_url) {
-                const link = document.createElement('a');
-                link.href = person.portfolio_url;
-                link.target = '_blank';
-                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-                link.innerHTML = '<i class="fas fa-briefcase"></i> Portfolio';
-                linksDiv.appendChild(link);
-            }
-
-            if (person.linkedin_url) {
-                const link = document.createElement('a');
-                link.href = person.linkedin_url;
-                link.target = '_blank';
-                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-                link.innerHTML = '<i class="fab fa-linkedin"></i> LinkedIn';
-                linksDiv.appendChild(link);
-            }
-
-            if (person.social_media_url) {
-                const link = document.createElement('a');
-                link.href = person.social_media_url;
-                link.target = '_blank';
-                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-                link.innerHTML = '<i class="fas fa-share-alt"></i> Social';
-                linksDiv.appendChild(link);
-            }
-
-            leftCol.appendChild(linksHeading);
-            leftCol.appendChild(linksDiv);
-        }
-
-        // Right column - Projects
+        // Right column - Projects (always shown)
         const rightCol = document.createElement('div');
         rightCol.className = 'col-md-6';
 
@@ -961,8 +955,15 @@ window.showUserProfile = async function (personName) {
 };
 
 // 6. Start the App
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     fetchProjects(); // Fetch real data instead of using the array
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        document.getElementById('login-link').style.display = 'none';
+        document.getElementById('upload-link').style.display = 'inline-block';
+        document.getElementById('profile-link').style.display = 'inline-block';
+        document.getElementById('logout-btn').style.display = 'inline-block';
+    }
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
@@ -976,4 +977,13 @@ document.addEventListener('DOMContentLoaded', () => {
     searchCollapse.addEventListener('hide.bs.collapse', () => {
         toggleBtn.innerHTML = '<i class="fas fa-search"></i> Show Search & Filters';
     });
+
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        });
+    }
 });
