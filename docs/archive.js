@@ -379,7 +379,22 @@ window.showProjectDetails = function (projectID) {
     const creatorsP = document.createElement('p');
     creatorsP.className = 'mb-1';
     creatorsP.innerHTML = '<strong>Creators:</strong> ';
-    creatorsP.appendChild(document.createTextNode((project.creators || []).join(', ')));
+
+    if (project.creators && project.creators.length > 0) {
+        project.creators.forEach((creator, index) => {
+            const creatorSpan = document.createElement('span');
+            creatorSpan.textContent = creator;
+            creatorSpan.style.cursor = 'pointer';
+            creatorSpan.style.textDecoration = 'underline';
+            creatorSpan.className = 'text-primary';
+            creatorSpan.onclick = () => showUserProfile(creator);
+
+            creatorsP.appendChild(creatorSpan);
+            if (index < project.creators.length - 1) {
+                creatorsP.appendChild(document.createTextNode(', '));
+            }
+        });
+    }
     leftCol.appendChild(creatorsP);
 
     // Add whitespace
@@ -411,7 +426,24 @@ window.showProjectDetails = function (projectID) {
     const instructorsH6 = document.createElement('h6');
     instructorsH6.className = 'text-muted mb-3';
     instructorsH6.innerHTML = 'Instructor(s): ';
-    instructorsH6.appendChild(document.createTextNode((project.instructors || []).join(', ') || 'N/A'));
+
+    if (project.instructors && project.instructors.length > 0) {
+        project.instructors.forEach((instructor, index) => {
+            const instructorSpan = document.createElement('span');
+            instructorSpan.textContent = instructor;
+            instructorSpan.style.cursor = 'pointer';
+            instructorSpan.style.textDecoration = 'underline';
+            instructorSpan.className = 'text-primary';
+            instructorSpan.onclick = () => showUserProfile(instructor);
+
+            instructorsH6.appendChild(instructorSpan);
+            if (index < project.instructors.length - 1) {
+                instructorsH6.appendChild(document.createTextNode(', '));
+            }
+        });
+    } else {
+        instructorsH6.appendChild(document.createTextNode('N/A'));
+    }
     leftCol.appendChild(instructorsH6);
 
     // Assignment
@@ -743,6 +775,190 @@ async function loadInstitutions() {
         console.error('Error loading institutions:', error);
     }
 }
+
+// Show user profile modal
+window.showUserProfile = async function (personName) {
+    try {
+        // Fetch person data
+        const { data: person, error: personError } = await supabaseClient
+            .from(TABLES.people)
+            .select('*, institution:institution_id(institutionname)')
+            .ilike('name', personName)
+            .maybeSingle();
+
+        if (personError) throw personError;
+        if (!person) {
+            alert('Profile not found');
+            return;
+        }
+
+        // Check if profile is public
+        if (!person.is_public) {
+            alert('This profile is private');
+            return;
+        }
+
+        // Fetch person's projects
+        const { data: projectRelations, error: projectsError } = await supabaseClient
+            .from(TABLES.people_projects)
+            .select('project_id, role, projects:project_id(*)')
+            .eq('person_id', person.id);
+
+        if (projectsError) throw projectsError;
+
+        // Set modal title
+        document.getElementById('userProfileModalLabel').textContent = person.name;
+
+        // Build profile content
+        const profileDetails = document.getElementById('user-profile-details');
+        profileDetails.innerHTML = '';
+
+        const container = document.createElement('div');
+        container.className = 'row';
+
+        // Left column - Basic info
+        const leftCol = document.createElement('div');
+        leftCol.className = 'col-md-6';
+
+        if (person.bio) {
+            const bioHeading = document.createElement('h6');
+            bioHeading.className = 'text-primary mb-2';
+            bioHeading.innerHTML = '<i class="fas fa-user"></i> About';
+
+            const bioText = document.createElement('p');
+            bioText.textContent = person.bio;
+
+            leftCol.appendChild(bioHeading);
+            leftCol.appendChild(bioText);
+        }
+
+        // Education info
+        if (person.degree || person.graduation_year || person.institution) {
+            const eduHeading = document.createElement('h6');
+            eduHeading.className = 'text-primary mb-2 mt-3';
+            eduHeading.innerHTML = '<i class="fas fa-graduation-cap"></i> Education';
+
+            const eduText = document.createElement('p');
+            const eduParts = [];
+            if (person.degree) eduParts.push(person.degree);
+            if (person.institution?.institutionname) eduParts.push(person.institution.institutionname);
+            if (person.graduation_year) eduParts.push(`Class of ${person.graduation_year}`);
+            eduText.textContent = eduParts.join(' • ');
+
+            leftCol.appendChild(eduHeading);
+            leftCol.appendChild(eduText);
+        }
+
+        // Links
+        const hasLinks = person.website || person.portfolio_url || person.linkedin_url || person.social_media_url;
+        if (hasLinks) {
+            const linksHeading = document.createElement('h6');
+            linksHeading.className = 'text-primary mb-2 mt-3';
+            linksHeading.innerHTML = '<i class="fas fa-link"></i> Links';
+
+            const linksDiv = document.createElement('div');
+
+            if (person.website) {
+                const link = document.createElement('a');
+                link.href = person.website;
+                link.target = '_blank';
+                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                link.innerHTML = '<i class="fas fa-globe"></i> Website';
+                linksDiv.appendChild(link);
+            }
+
+            if (person.portfolio_url) {
+                const link = document.createElement('a');
+                link.href = person.portfolio_url;
+                link.target = '_blank';
+                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                link.innerHTML = '<i class="fas fa-briefcase"></i> Portfolio';
+                linksDiv.appendChild(link);
+            }
+
+            if (person.linkedin_url) {
+                const link = document.createElement('a');
+                link.href = person.linkedin_url;
+                link.target = '_blank';
+                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                link.innerHTML = '<i class="fab fa-linkedin"></i> LinkedIn';
+                linksDiv.appendChild(link);
+            }
+
+            if (person.social_media_url) {
+                const link = document.createElement('a');
+                link.href = person.social_media_url;
+                link.target = '_blank';
+                link.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+                link.innerHTML = '<i class="fas fa-share-alt"></i> Social';
+                linksDiv.appendChild(link);
+            }
+
+            leftCol.appendChild(linksHeading);
+            leftCol.appendChild(linksDiv);
+        }
+
+        // Right column - Projects
+        const rightCol = document.createElement('div');
+        rightCol.className = 'col-md-6';
+
+        if (projectRelations && projectRelations.length > 0) {
+            const projectsHeading = document.createElement('h6');
+            projectsHeading.className = 'text-success mb-2';
+            projectsHeading.innerHTML = '<i class="fas fa-gamepad"></i> Projects';
+
+            rightCol.appendChild(projectsHeading);
+
+            projectRelations.forEach(rel => {
+                const project = rel.projects;
+                if (!project) return;
+
+                const projectCard = document.createElement('div');
+                projectCard.className = 'card mb-2';
+                projectCard.style.cursor = 'pointer';
+                projectCard.onclick = () => {
+                    // Close profile modal
+                    bootstrap.Modal.getInstance(document.getElementById('userProfileModal')).hide();
+                    // Open project modal
+                    showProjectDetails(project.id);
+                };
+
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body p-2';
+
+                const title = document.createElement('h6');
+                title.className = 'mb-1';
+                title.textContent = project.title;
+
+                const role = document.createElement('small');
+                role.className = 'text-muted';
+                role.textContent = `Role: ${rel.role.charAt(0).toUpperCase() + rel.role.slice(1)}`;
+
+                cardBody.appendChild(title);
+                cardBody.appendChild(role);
+                projectCard.appendChild(cardBody);
+                rightCol.appendChild(projectCard);
+            });
+        } else {
+            const noProjects = document.createElement('p');
+            noProjects.className = 'text-muted';
+            noProjects.textContent = 'No projects yet';
+            rightCol.appendChild(noProjects);
+        }
+
+        container.appendChild(leftCol);
+        container.appendChild(rightCol);
+        profileDetails.appendChild(container);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('userProfileModal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('Error loading profile:', error);
+        alert('Error loading profile');
+    }
+};
 
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', () => {
