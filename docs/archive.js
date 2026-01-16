@@ -750,4 +750,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
+
+    // Update search toggle button text
+    const searchCollapse = document.getElementById('searchCollapse');
+    const toggleBtn = document.querySelector('[data-bs-target="#searchCollapse"]');
+    searchCollapse.addEventListener('show.bs.collapse', () => {
+        toggleBtn.innerHTML = '<i class="fas fa-search"></i> Hide Search & Filters';
+    });
+    searchCollapse.addEventListener('hide.bs.collapse', () => {
+        toggleBtn.innerHTML = '<i class="fas fa-search"></i> Show Search & Filters';
+    });
 });
