@@ -103,21 +103,18 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="gameGenre" class="form-label">Genre <span
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Genres (up to 3) <span
                                                 class="text-danger">*</span></label>
-                                        <select class="form-select" id="gameGenre" required>
-                                            <option value="">Select genre...</option>
-                                            <option value="Platformer">Platformer</option>
-                                            <option value="Puzzle">Puzzle</option>
-                                            <option value="Narrative">Narrative</option>
-                                            <option value="Action">Action</option>
-                                            <option value="Adventure">Adventure</option>
-                                            <option value="RPG">RPG</option>
-                                            <option value="Simulation">Simulation</option>
-                                            <option value="Strategy">Strategy</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                        <div class="tag-input-container" id="genres-container">
+                                            <input type="text" id="genres-input" list="genres-list"
+                                                placeholder="Type genre and press Enter"
+                                                style="border: none; outline: none; flex: 1; min-width: 150px;">
+                                        </div>
+                                        <datalist id="genres-list">
+                                            <!-- Populated dynamically from database -->
+                                        </datalist>
+                                        <small class="text-muted">Press Enter after each genre (max 3)</small>
                                     </div>
                                 </div>
                             </fieldset>

@@ -28,32 +28,41 @@
         <section class="mb-5 p-4 rounded bg-light border">
             <h2 class="h4 mb-3">Find a Game</h2>
             <form id="search-form" class="row g-3">
-                <div class="col-md-3">
-                    <label for="search-title" class="form-label">Title / Keyword</label>
-                    <input type="text" class="form-control" id="search-title" placeholder="Search title or keywords">
+                <div class="col-md-4">
+                    <label for="search-title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="search-title" placeholder="Search by title">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label for="search-creator" class="form-label">Creator Name</label>
                     <input type="text" class="form-control" id="search-creator" placeholder="E.g., Alex Chen">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <label for="filter-institution" class="form-label">Institution</label>
                     <select class="form-select" id="filter-institution">
                         <option value="">All Institutions</option>
                         <!-- Populated dynamically from database -->
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
+                    <label for="filter-keyword" class="form-label">Keywords (up to 5)</label>
+                    <select class="form-select" id="filter-keyword" multiple size="5">
+                        <!-- Populated dynamically from database -->
+                    </select>
+                    <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                </div>
+                <div class="col-md-3">
                     <label for="filter-genre" class="form-label">Genre</label>
                     <select class="form-select" id="filter-genre">
                         <option value="">All Genres</option>
-                        <option value="Platformer">Platformer</option>
-                        <option value="Puzzle">Puzzle</option>
-                        <option value="Narrative">Narrative</option>
+                        <!-- Populated dynamically from database -->
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Search</button>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" id="clear-filters" class="btn btn-outline-secondary w-100"><i
+                            class="fas fa-times"></i> Clear Filters</button>
                 </div>
             </form>
         </section>

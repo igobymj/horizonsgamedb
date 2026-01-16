@@ -218,23 +218,44 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
     const titleQuery = document.getElementById('search-title').value.toLowerCase();
     const creatorQuery = document.getElementById('search-creator').value.toLowerCase();
     const institutionFilter = document.getElementById('filter-institution').value;
+    const keywordSelect = document.getElementById('filter-keyword');
+    const selectedKeywords = Array.from(keywordSelect.selectedOptions).map(opt => opt.value);
     const genreFilter = document.getElementById('filter-genre').value;
 
     const filteredProjects = allProjects.filter(project => {
-        // Safety checks (?.) added in case fields are missing in DB
-        const titleMatch = project.title?.toLowerCase().includes(titleQuery) ||
-            (project.keywords || []).some(kw => kw.toLowerCase().includes(titleQuery));
+        // Title search - only in title field
+        const titleMatch = !titleQuery || project.title?.toLowerCase().includes(titleQuery);
 
+        // Creator search
         const creatorMatch = !creatorQuery ||
             (project.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
 
+        // Institution filter - exact match
         const institutionMatch = !institutionFilter || project.institution === institutionFilter;
-        const genreMatch = !genreFilter || project.genre === genreFilter;
 
-        return titleMatch && creatorMatch && institutionMatch && genreMatch;
+        // Keyword filter - project must have at least one of the selected keywords
+        const keywordMatch = selectedKeywords.length === 0 ||
+            selectedKeywords.some(kw => (project.keywords || []).includes(kw));
+
+        // Genre filter - project must have the selected genre in its genres array
+        const genreMatch = !genreFilter || (project.genres || []).includes(genreFilter);
+
+        return titleMatch && creatorMatch && institutionMatch && keywordMatch && genreMatch;
     });
 
     renderProjects(filteredProjects);
+});
+
+// Clear filters button
+document.getElementById('clear-filters').addEventListener('click', function () {
+    document.getElementById('search-title').value = '';
+    document.getElementById('search-creator').value = '';
+    document.getElementById('filter-institution').value = '';
+    document.getElementById('filter-genre').value = '';
+    // Clear multi-select keyword filter
+    const keywordSelect = document.getElementById('filter-keyword');
+    Array.from(keywordSelect.options).forEach(opt => opt.selected = false);
+    renderProjects(allProjects);
 });
 
 // 5. Modal Logic (Updated for Database fields)
@@ -434,12 +455,12 @@ window.showProjectDetails = function (projectID) {
 
     // Genre
     const genreHeading = document.createElement('h6');
-    genreHeading.className = 'text-primary mb-2';
-    genreHeading.innerHTML = '<i class="fas fa-layer-group"></i> Genre';
+    genreHeading.className = 'text-success mb-2';
+    genreHeading.innerHTML = '<i class="fas fa-layer-group"></i> Genre(s)';
 
     const genreText = document.createElement('p');
-    genreText.className = 'mb-3';
-    genreText.textContent = project.genre;
+    genreText.className = 'fw-bold';
+    genreText.textContent = (project.genres || []).join(', ') || 'Not specified';
 
     rightCol.appendChild(genreHeading);
     rightCol.appendChild(genreText);
@@ -647,6 +668,57 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Load genres for filter dropdown
+async function loadGenres() {
+    try {
+        const { data: genres, error } = await supabaseClient
+            .from(TABLES.genres)
+            .select('genre')
+            .order('genre');
+
+        if (error) {
+            console.error('Error loading genres:', error);
+            return;
+        }
+
+        const select = document.getElementById('filter-genre');
+        genres.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g.genre;
+            option.textContent = g.genre;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading genres:', error);
+    }
+}
+
+// Load keywords for filter dropdown
+async function loadKeywordsFilter() {
+    try {
+        const { data: keywords, error } = await supabaseClient
+            .from(TABLES.keywords)
+            .select('keyword')
+            .order('keyword');
+
+        if (error) {
+            console.error('Error loading keywords:', error);
+            return;
+        }
+
+        const select = document.getElementById('filter-keyword');
+        // No default option is added here, only options from the database
+        keywords.forEach(kw => {
+            const option = document.createElement('option');
+            option.value = kw.keyword;
+            option.textContent = kw.keyword;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading keywords:', error);
+    }
+}
+
 // Load institutions for filter dropdown
 async function loadInstitutions() {
     try {
@@ -676,4 +748,6 @@ async function loadInstitutions() {
 document.addEventListener('DOMContentLoaded', () => {
     fetchProjects(); // Fetch real data instead of using the array
     loadInstitutions(); // Load institutions for filter
+    loadGenres(); // Load genres for filter
+    loadKeywordsFilter(); // Load keywords for filter
 });

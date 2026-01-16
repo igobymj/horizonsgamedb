@@ -30,6 +30,7 @@ function setupLogout() {
 let creators = [];
 let keywords = [];
 let instructors = [];
+let genres = [];
 let compressedImages = [];
 let techUsed = [];
 
@@ -39,6 +40,8 @@ function setupTagInput(inputId, containerId, storageArray) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(containerId);
     const isKeywordInput = inputId === 'keywords-input';
+    const isGenreInput = inputId === 'genres-input';
+    const maxGenres = 3;
 
     input.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
@@ -48,6 +51,13 @@ function setupTagInput(inputId, containerId, storageArray) {
             // Normalize keywords (lowercase)
             if (isKeywordInput) {
                 value = value.toLowerCase();
+            }
+
+            // Check genre limit
+            if (isGenreInput && storageArray.length >= maxGenres) {
+                alert(`You can only add up to ${maxGenres} genres`);
+                input.value = '';
+                return;
             }
 
             if (value && !storageArray.includes(value)) {
@@ -254,7 +264,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
 
         const projectData = {
             title: document.getElementById('gameTitle').value.trim(),
-            genre: document.getElementById('gameGenre').value,
+            genres: genres, // Array of genre names
             year: parseInt(document.getElementById('year').value),
             term: document.getElementById('term').value,
             institution_id: null, // Will be set after institution lookup
@@ -342,7 +352,9 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             document.getElementById('upload-form').reset();
             creators = [];
             keywords = [];
+            genres = [];
             techUsed = [];
+            instructors = [];
             compressedImages = [];
             document.getElementById('image-previews').innerHTML = '';
             document.getElementById('compression-status').innerHTML = '';
@@ -387,10 +399,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load people
     loadPeople();
 
+    // Load genres
+    loadGenresUpload();
+
     // Setup tag inputs
     setupTagInput('instructors-input', 'instructors-container', instructors);
     setupTagInput('creators-input', 'creators-container', creators);
     setupTagInput('keywords-input', 'keywords-container', keywords);
+    setupTagInput('genres-input', 'genres-container', genres);
     setupTagInput('techUsed-input', 'techUsed-container', techUsed);
 
 });
@@ -543,5 +559,29 @@ async function insertKeywordIfNew(keyword) {
         }
     } catch (error) {
         console.error('Error inserting keyword:', error);
+    }
+}
+
+// Load genres for upload form datalist
+async function loadGenresUpload() {
+    try {
+        const { data: genres, error } = await supabaseClient
+            .from(TABLES.genres)
+            .select('genre')
+            .order('genre');
+
+        if (error) {
+            console.error('Error loading genres:', error);
+            return;
+        }
+
+        const datalist = document.getElementById('genres-list');
+        genres.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g.genre;
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading genres:', error);
     }
 }
