@@ -178,7 +178,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
                 name: name,
                 institution_id: institutionId,
                 institution_other: institutionOther,
-                type: userType
+                user_type: userType
             }]);
 
         if (peopleError) throw peopleError;

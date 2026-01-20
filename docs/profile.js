@@ -96,6 +96,7 @@ async function saveProfile(event) {
             graduation_year: document.getElementById('graduation-year').value ?
                 parseInt(document.getElementById('graduation-year').value) : null,
             institution_id: document.getElementById('institution').value || null,
+            institution_other: null, // Clear institution_other when institution_id is set
             website: document.getElementById('website').value.trim() || null,
             linkedin_url: document.getElementById('linkedin').value.trim() || null,
             social_media_url: document.getElementById('social-media').value.trim() || null,
