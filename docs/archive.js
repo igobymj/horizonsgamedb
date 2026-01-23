@@ -978,7 +978,7 @@ function convertArrayFieldsToTagEditors() {
                     const currentGenres = tagsDisplay.querySelectorAll('.badge').length;
                     console.log('Current genre count:', currentGenres);
                     if (currentGenres >= 3) {
-                        alert('You can only add up to 3 genres');
+                        showWarning('You can only add up to 3 genres per project.', 'Genre Limit Reached');
                         input.value = '';
                         return;
                     }
@@ -1003,7 +1003,7 @@ function convertArrayFieldsToTagEditors() {
                     if (isKeywords) {
                         const isNew = await isNewKeyword(value);
                         if (isNew) {
-                            const confirmed = confirm(`"${value}" is a new keyword. Do you want to add it to the database?`);
+                            const confirmed = await showKeywordConfirmModal(value);
                             if (!confirmed) {
                                 input.value = '';
                                 return;
@@ -1016,7 +1016,7 @@ function convertArrayFieldsToTagEditors() {
                     if (isGenres) {
                         const isValid = await isValidGenre(value);
                         if (!isValid) {
-                            alert(`"${value}" is not a valid genre. Please select from the existing genres.`);
+                            showWarning(`"${value}" is not a valid genre. Please select from the existing genres.`, 'Invalid Genre');
                             input.value = '';
                             return;
                         }
@@ -1034,7 +1034,8 @@ function convertArrayFieldsToTagEditors() {
                             .single();
 
                         if (!personData) {
-                            alert(`"${value}" is not found in the people database. Please use an existing name.`);
+                            const fieldName = isCreators ? 'Creator' : 'Instructor';
+                            showWarning(`"${value}" is not found in the people database. Please use an existing name.`, `${fieldName} Not Found`);
                             input.value = '';
                             return;
                         }
@@ -1150,6 +1151,49 @@ async function loadGenresForEdit() {
 // Load people for edit mode datalist (uses shared utility)
 async function loadPeopleForEdit() {
     await loadPeople('edit-people-datalist');
+}
+
+// Show custom keyword confirmation modal (instead of system confirm dialog)
+function showKeywordConfirmModal(keyword) {
+    return new Promise((resolve) => {
+        const modal = new bootstrap.Modal(document.getElementById('keywordConfirmModal'));
+        const keywordText = document.getElementById('new-keyword-text');
+        const confirmBtn = document.getElementById('confirm-keyword-btn');
+
+        keywordText.textContent = `"${keyword}"`;
+
+        // Handle confirm
+        const handleConfirm = () => {
+            modal.hide();
+            cleanup();
+            resolve(true);
+        };
+
+        // Handle cancel/close
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        // Cleanup listeners
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            document.getElementById('keywordConfirmModal').removeEventListener('hidden.bs.modal', handleCancel);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        document.getElementById('keywordConfirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+        modal.show();
+    });
+}
+
+// Show custom warning/alert modal (instead of system alert dialog)
+function showWarning(message, title = 'Warning') {
+    const modal = new bootstrap.Modal(document.getElementById('warningModal'));
+    document.getElementById('warning-title').textContent = title;
+    document.getElementById('warning-message').textContent = message;
+    modal.show();
 }
 
 // Storage for image/video edits
