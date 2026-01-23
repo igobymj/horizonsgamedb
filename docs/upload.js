@@ -41,7 +41,7 @@ function setupTagInput(inputId, containerId, storageArray) {
 
             // Check genre limit
             if (isGenreInput && storageArray.length >= maxGenres) {
-                alert(`You can only add up to ${maxGenres} genres`);
+                showWarning(`You can only add up to ${maxGenres} genres per project.`, 'Genre Limit Reached');
                 input.value = '';
                 return;
             }
@@ -56,6 +56,16 @@ function setupTagInput(inputId, containerId, storageArray) {
                             input.value = '';
                             return;
                         }
+                    }
+                }
+
+                // For genres, validate that it exists in the database
+                if (isGenreInput) {
+                    const isValid = await isValidGenre(value);
+                    if (!isValid) {
+                        showWarning(`"${value}" is not a valid genre. Please select from the existing genres.`, 'Invalid Genre');
+                        input.value = '';
+                        return;
                     }
                 }
 
@@ -101,7 +111,7 @@ document.getElementById('images').addEventListener('change', async (e) => {
     const statusDiv = document.getElementById('compression-status');
 
     if (files.length > 5) {
-        alert('Maximum 5 images allowed');
+        showWarning('Maximum 5 images allowed per project', 'Image Limit Reached');
         e.target.value = '';
         return;
     }

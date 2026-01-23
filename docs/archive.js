@@ -671,11 +671,11 @@ window.showProjectDetails = function (projectID) {
 
             // Close modal and show success
             projectModal.hide();
-            alert('Project deleted successfully!');
+            showWarning('Project deleted successfully!', 'Success', 'success');
 
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Failed to delete project: ' + error.message);
+            showWarning('Failed to delete project: ' + error.message, 'Error', 'error');
         }
     }
 
@@ -993,7 +993,7 @@ function convertArrayFieldsToTagEditors() {
                     console.log('Existing tags:', existingTags);
 
                     if (existingTags.includes(value)) {
-                        alert('This tag already exists');
+                        showWarning('This tag already exists', 'Duplicate Tag');
                         input.value = '';
                         return;
                     }
@@ -1153,44 +1153,24 @@ async function loadPeopleForEdit() {
     await loadPeople('edit-people-datalist');
 }
 
-// Show custom keyword confirmation modal (instead of system confirm dialog)
-function showKeywordConfirmModal(keyword) {
-    return new Promise((resolve) => {
-        const modal = new bootstrap.Modal(document.getElementById('keywordConfirmModal'));
-        const keywordText = document.getElementById('new-keyword-text');
-        const confirmBtn = document.getElementById('confirm-keyword-btn');
 
-        keywordText.textContent = `"${keyword}"`;
-
-        // Handle confirm
-        const handleConfirm = () => {
-            modal.hide();
-            cleanup();
-            resolve(true);
-        };
-
-        // Handle cancel/close
-        const handleCancel = () => {
-            cleanup();
-            resolve(false);
-        };
-
-        // Cleanup listeners
-        const cleanup = () => {
-            confirmBtn.removeEventListener('click', handleConfirm);
-            document.getElementById('keywordConfirmModal').removeEventListener('hidden.bs.modal', handleCancel);
-        };
-
-        confirmBtn.addEventListener('click', handleConfirm);
-        document.getElementById('keywordConfirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
-
-        modal.show();
-    });
-}
 
 // Show custom warning/alert modal (instead of system alert dialog)
-function showWarning(message, title = 'Warning') {
+// type can be: 'warning' (yellow), 'success' (green), 'error' (red)
+function showWarning(message, title = 'Warning', type = 'warning') {
     const modal = new bootstrap.Modal(document.getElementById('warningModal'));
+    const modalHeader = document.querySelector('#warningModal .modal-header');
+
+    // Set header color based on type
+    modalHeader.className = 'modal-header';
+    if (type === 'success') {
+        modalHeader.classList.add('bg-success', 'text-white');
+    } else if (type === 'error') {
+        modalHeader.classList.add('bg-danger', 'text-white');
+    } else {
+        modalHeader.classList.add('bg-warning', 'text-dark');
+    }
+
     document.getElementById('warning-title').textContent = title;
     document.getElementById('warning-message').textContent = message;
     modal.show();
@@ -1318,7 +1298,7 @@ async function handleNewImageUpload(e) {
     const totalImages = currentImageCount + newImagesToUpload.length + files.length;
 
     if (totalImages > 5) {
-        alert('Maximum 5 images allowed per project');
+        showWarning('Maximum 5 images allowed per project', 'Image Limit Reached');
         e.target.value = '';
         return;
     }
@@ -1390,14 +1370,14 @@ async function saveProjectChanges() {
         const videolinkInput = document.getElementById('edit-videolink');
 
         if (!titleInput) {
-            alert('Title field not found');
+            showWarning('Title field not found', 'Error', 'error');
             return;
         }
 
         const newTitle = titleInput.value.trim();
 
         if (!newTitle) {
-            alert('Title cannot be empty');
+            showWarning('Title cannot be empty', 'Validation Error');
             return;
         }
 
@@ -1493,7 +1473,7 @@ async function saveProjectChanges() {
 
         if (error) {
             console.error('Error saving project:', error);
-            alert('Error saving changes: ' + error.message);
+            showWarning('Error saving changes: ' + error.message, 'Error', 'error');
             return;
         }
 
@@ -1568,11 +1548,11 @@ async function saveProjectChanges() {
         toggleEditMode(false);
         window.showProjectDetails(currentProject.id);
 
-        alert('Changes saved successfully!');
+        showWarning('Changes saved successfully!', 'Success', 'success');
 
     } catch (error) {
         console.error('Error saving project:', error);
-        alert('Error saving changes');
+        showWarning('Error saving changes', 'Error', 'error');
     }
 }
 
@@ -1729,7 +1709,7 @@ window.showUserProfile = async function (personName) {
 
         if (personError) throw personError;
         if (!person) {
-            alert('Profile not found');
+            showWarning('Profile not found', 'Error', 'error');
             return;
         }
 
@@ -1891,7 +1871,7 @@ window.showUserProfile = async function (personName) {
 
     } catch (error) {
         console.error('Error loading profile:', error);
-        alert('Error loading profile');
+        showWarning('Error loading profile', 'Error', 'error');
     }
 };
 

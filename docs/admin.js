@@ -20,7 +20,7 @@ async function checkAdminAuth() {
 
     if (error || !personData || personData.user_type !== 'admin') {
         // Not an admin, redirect to index with error
-        alert('Access denied. Admin privileges required.');
+        showWarning('Access denied. Admin privileges required.', 'Access Denied', 'error');
         window.location.href = 'index.html';
         return false;
     }

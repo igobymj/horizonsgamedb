@@ -345,6 +345,25 @@
         </div>
     </div>
 
+    <!-- Warning/Alert Modal -->
+    <div class="modal fade" id="warningModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i><span
+                            id="warning-title">Warning</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="warning-message" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-light text-center p-3 mt-5 border-top">
         <p class="mb-0">&copy; 2025 Student Game Archive. Powered by open source projects.</p>
     </footer>
@@ -358,6 +377,7 @@
     <script src="validation-utils.js"></script>
     <script src="tag-utils.js"></script>
     <script src="image-utils.js"></script>
+    <script src="modal-utils.js"></script>
     <!-- Main application scripts -->
     <script src="upload.js"></script>
 </body>
