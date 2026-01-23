@@ -10,8 +10,10 @@ function getRedirectUrl() {
         return redirect;
     }
 
-    // Check document.referrer
-    if (document.referrer && document.referrer.includes(window.location.hostname)) {
+    // Check document.referrer, but exclude reset-password.html
+    if (document.referrer &&
+        document.referrer.includes(window.location.hostname) &&
+        !document.referrer.includes('reset-password.html')) {
         return document.referrer;
     }
 
@@ -205,6 +207,45 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     } finally {
         signupBtn.disabled = false;
         signupBtn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Create Account';
+    }
+});
+
+// Password Reset Request
+document.getElementById('reset-request-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('reset-email').value.trim();
+    const resetBtn = document.getElementById('reset-request-btn');
+    const messageDiv = document.getElementById('reset-message');
+
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+
+    try {
+        // Get the current origin for the redirect URL
+        const redirectUrl = `${window.location.origin}/reset-password.html`;
+
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl
+        });
+
+        if (error) throw error;
+
+        messageDiv.textContent = 'Password reset email sent! Check your inbox.';
+        messageDiv.className = 'alert alert-success mt-3';
+        messageDiv.classList.remove('d-none');
+
+        // Clear form
+        document.getElementById('reset-request-form').reset();
+
+    } catch (error) {
+        console.error('Reset error:', error);
+        messageDiv.textContent = error.message || 'Failed to send reset email. Please try again.';
+        messageDiv.className = 'alert alert-danger mt-3';
+        messageDiv.classList.remove('d-none');
+    } finally {
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = '<i class="fas fa-envelope me-2"></i>Send Reset Link';
     }
 });
 

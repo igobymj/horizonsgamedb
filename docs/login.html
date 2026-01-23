@@ -58,6 +58,12 @@
                                             <i class="fas fa-sign-in-alt me-2"></i>Login
                                         </button>
                                     </div>
+                                    <div class="text-center mt-3">
+                                        <a href="#" id="forgot-password-link" data-bs-toggle="modal"
+                                            data-bs-target="#resetPasswordModal" class="text-muted">
+                                            <i class="fas fa-key me-1"></i>Forgot your password?
+                                        </a>
+                                    </div>
                                 </form>
                             </div>
 
@@ -134,6 +140,36 @@
             </div>
         </div>
     </main>
+
+    <!-- Password Reset Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">
+                        <i class="fas fa-key me-2"></i>Reset Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Enter your email address and we'll send you a link to reset your password.</p>
+                    <form id="reset-request-form">
+                        <div class="mb-3">
+                            <label for="reset-email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="reset-email" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="reset-request-btn">
+                                <i class="fas fa-envelope me-2"></i>Send Reset Link
+                            </button>
+                        </div>
+                    </form>
+                    <div id="reset-message" class="alert mt-3 d-none" role="alert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-light text-center p-3 mt-5 border-top">
         <p class="mb-0">&copy; 2025 Student Game Archive. Powered by open source projects.</p>
