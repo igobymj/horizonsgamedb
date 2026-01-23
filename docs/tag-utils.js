@@ -113,3 +113,36 @@ async function loadGenres(datalistId) {
         console.error('Error loading genres:', error);
     }
 }
+
+// ===== PEOPLE OPERATIONS =====
+
+/**
+ * Load people from database and populate a datalist element
+ * @param {string} datalistId - The ID of the datalist element to populate
+ * @returns {Promise<void>}
+ */
+async function loadPeople(datalistId) {
+    try {
+        const { data: people, error } = await supabaseClient
+            .from(TABLES.people)
+            .select('name')
+            .order('name');
+
+        if (error) {
+            console.error('Error loading people:', error);
+            return;
+        }
+
+        const datalist = document.getElementById(datalistId);
+        if (datalist) {
+            datalist.innerHTML = ''; // Clear existing options
+            people.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.name;
+                datalist.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading people:', error);
+    }
+}

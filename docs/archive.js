@@ -938,6 +938,21 @@ function convertArrayFieldsToTagEditors() {
             }
         }
 
+        // Add datalist for creators (people autocomplete)
+        if (containerId === 'edit-creators') {
+            input.setAttribute('list', 'edit-people-datalist');
+
+            // Create datalist if it doesn't exist
+            if (!document.getElementById('edit-people-datalist')) {
+                const datalist = document.createElement('datalist');
+                datalist.id = 'edit-people-datalist';
+                document.body.appendChild(datalist);
+
+                // Load people from database
+                loadPeopleForEdit();
+            }
+        }
+
         // Add tag on Enter
         input.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
@@ -1006,6 +1021,24 @@ function convertArrayFieldsToTagEditors() {
                             return;
                         }
                     }
+
+                    // People validation: check if person exists in database (for creators and instructors)
+                    const isCreators = containerId === 'edit-creators';
+                    const isInstructors = containerId === 'edit-instructors';
+
+                    if (isCreators || isInstructors) {
+                        const { data: personData } = await supabaseClient
+                            .from(TABLES.people)
+                            .select('id')
+                            .ilike('name', value)
+                            .single();
+
+                        if (!personData) {
+                            alert(`"${value}" is not found in the people database. Please use an existing name.`);
+                            input.value = '';
+                            return;
+                        }
+                    }
                     const badge = createTagBadge(value, containerId);
                     tagsDisplay.appendChild(badge);
                     input.value = '';
@@ -1045,9 +1078,9 @@ function convertArrayFieldsToTagEditors() {
         return badge;
     }
 
-    // Find and replace creators
-    const creatorsElements = Array.from(modalDetails.querySelectorAll('h6')).filter(h6 =>
-        h6.textContent.includes('Creator(s):')
+    // Find and replace creators (looking for <p> with <strong>Creators:</strong>)
+    const creatorsElements = Array.from(modalDetails.querySelectorAll('p')).filter(p =>
+        p.innerHTML.includes('<strong>Creators:</strong>')
     );
     if (creatorsElements.length > 0) {
         const editor = createTagEditor('edit-creators', currentProject.creators || [], 'Add creator name');
@@ -1112,6 +1145,11 @@ function collectTagsFromEditor(editorId) {
 // Load genres for edit mode datalist (uses shared utility)
 async function loadGenresForEdit() {
     await loadGenres('edit-genres-datalist');
+}
+
+// Load people for edit mode datalist (uses shared utility)
+async function loadPeopleForEdit() {
+    await loadPeople('edit-people-datalist');
 }
 
 // Storage for image/video edits
@@ -1415,11 +1453,71 @@ async function saveProjectChanges() {
             return;
         }
 
+        // === UPDATE PEOPLE_PROJECTS JUNCTION TABLE ===
+
+        // Step 1: Delete all existing people_projects entries for this project
+        const { error: deleteError } = await supabaseClient
+            .from(TABLES.people_projects)
+            .delete()
+            .eq('project_id', currentProject.id);
+
+        if (deleteError) {
+            console.error('Error deleting old people associations:', deleteError);
+        }
+
+        // Step 2: Insert new creators
+        for (const creatorName of newCreators) {
+            const { data: personData } = await supabaseClient
+                .from(TABLES.people)
+                .select('id')
+                .ilike('name', creatorName)
+                .single();
+
+            if (personData) {
+                await supabaseClient
+                    .from(TABLES.people_projects)
+                    .insert([{
+                        project_id: currentProject.id,
+                        person_id: personData.id,
+                        role: 'creator'
+                    }]);
+            } else {
+                console.warn(`Creator "${creatorName}" not found in people table`);
+            }
+        }
+
+        // Step 3: Insert new instructors
+        for (const instructorName of newInstructors) {
+            const { data: personData } = await supabaseClient
+                .from(TABLES.people)
+                .select('id')
+                .ilike('name', instructorName)
+                .single();
+
+            if (personData) {
+                await supabaseClient
+                    .from(TABLES.people_projects)
+                    .insert([{
+                        project_id: currentProject.id,
+                        person_id: personData.id,
+                        role: 'instructor'
+                    }]);
+            } else {
+                console.warn(`Instructor "${instructorName}" not found in people table`);
+            }
+        }
+
         // Update local project data
         Object.assign(currentProject, updateData);
+        // Also update creators and instructors arrays
+        currentProject.creators = newCreators;
+        currentProject.instructors = newInstructors;
+
         const projectIndex = allProjects.findIndex(p => p.id === currentProject.id);
         if (projectIndex !== -1) {
             Object.assign(allProjects[projectIndex], updateData);
+            allProjects[projectIndex].creators = newCreators;
+            allProjects[projectIndex].instructors = newInstructors;
         }
 
         // Exit edit mode and reload project details
