@@ -852,10 +852,45 @@ function convertToEditMode() {
         link.replaceWith(input);
     }
 
+    // Convert video link to editable input
+    const videoLinkBtn = document.getElementById('modal-video-link');
+    if (videoLinkBtn) {
+        const container = document.createElement('div');
+        container.className = 'mb-3';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = 'Video Link (YouTube URL)';
+
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.className = 'form-control';
+        input.value = currentProject.videolink || '';
+        input.id = 'edit-videolink';
+        input.placeholder = 'https://www.youtube.com/watch?v=...';
+
+        container.appendChild(label);
+        container.appendChild(input);
+
+        // Insert before the image section or at the end of modal details
+        const imageEditContainer = document.getElementById('image-edit-container');
+        if (imageEditContainer) {
+            imageEditContainer.parentNode.insertBefore(container, imageEditContainer);
+        } else {
+            modalDetails.appendChild(container);
+        }
+
+        // Hide the video link button
+        videoLinkBtn.style.display = 'none';
+    }
+
     // Convert array fields to tag editors
     convertArrayFieldsToTagEditors();
 
-    console.log('Edit mode enabled - all text fields are now editable');
+    // Convert images/videos to edit mode
+    convertImagesToEditMode();
+
+    console.log('Edit mode enabled - all fields are now editable');
 }
 
 // Convert array fields (creators, keywords, etc.) to tag editors
@@ -1068,95 +1103,193 @@ function collectTagsFromEditor(editorId) {
     });
 }
 
-// Check if keyword is new (doesn't exist in database)
-async function isNewKeyword(keyword) {
-    try {
-        const { data, error } = await supabaseClient
-            .from(TABLES.keywords)
-            .select('keyword')
-            .eq('keyword', keyword)
-            .maybeSingle();
+// Helper to collect tags from editor (uses shared utility for text extraction)
 
-        if (error) {
-            console.error('Error checking keyword:', error);
-            return false;
-        }
 
-        return !data; // Returns true if keyword doesn't exist
-    } catch (error) {
-        console.error('Error checking keyword:', error);
-        return false;
-    }
-}
 
-// Insert new keyword to database
-async function insertKeywordIfNew(keyword) {
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) return;
 
-        const { error } = await supabaseClient
-            .from(TABLES.keywords)
-            .insert([{
-                keyword: keyword,
-                created_by: session.user.id
-            }]);
 
-        if (error && !error.message.includes('duplicate') && error.code !== '23505') {
-            console.error('Error inserting keyword:', error);
-        }
-    } catch (error) {
-        console.error('Error inserting keyword:', error);
-    }
-}
-
-// Check if genre exists in database
-async function isValidGenre(genre) {
-    try {
-        const { data, error } = await supabaseClient
-            .from(TABLES.genres)
-            .select('genre')
-            .eq('genre', genre)
-            .maybeSingle();
-
-        if (error) {
-            console.error('Error checking genre:', error);
-            return false;
-        }
-
-        return !!data; // Returns true if genre exists
-    } catch (error) {
-        console.error('Error checking genre:', error);
-        return false;
-    }
-}
-
-// Load genres for edit mode datalist
+// Load genres for edit mode datalist (uses shared utility)
 async function loadGenresForEdit() {
-    try {
-        const { data: genres, error } = await supabaseClient
-            .from(TABLES.genres)
-            .select('genre')
-            .order('genre');
+    await loadGenres('edit-genres-datalist');
+}
 
-        if (error) {
-            console.error('Error loading genres:', error);
-            return;
-        }
+// Storage for image/video edits
+let imagesToDelete = [];
+let newImagesToUpload = [];
+let videoUrlsToAdd = [];
+let videoUrlsToRemove = [];
 
-        const datalist = document.getElementById('edit-genres-datalist');
-        if (datalist) {
-            datalist.innerHTML = ''; // Clear existing options
-            genres.forEach(g => {
-                const option = document.createElement('option');
-                option.value = g.genre;
-                datalist.appendChild(option);
+// Convert images and videos to edit mode
+function convertImagesToEditMode() {
+    if (!currentProject) return;
+
+    // Reset storage arrays
+    imagesToDelete = [];
+    newImagesToUpload = [];
+    videoUrlsToAdd = [];
+    videoUrlsToRemove = [];
+
+    const modalDetails = document.getElementById('modal-details');
+
+    // Find the carousel
+    const carousel = modalDetails.querySelector('.carousel');
+    if (carousel) {
+        // Replace carousel with editable image grid
+        const imageEditContainer = document.createElement('div');
+        imageEditContainer.id = 'image-edit-container';
+        imageEditContainer.className = 'mb-4';
+
+        const heading = document.createElement('h6');
+        heading.innerHTML = '<i class="fas fa-images"></i> Project Images';
+        heading.className = 'mb-2';
+        imageEditContainer.appendChild(heading);
+
+        // Grid for existing images
+        const imageGrid = document.createElement('div');
+        imageGrid.id = 'edit-image-grid';
+        imageGrid.className = 'd-flex flex-wrap gap-2 mb-3';
+        imageGrid.style.maxWidth = '600px';
+
+        // Add existing images with delete buttons
+        if (currentProject.image_urls && currentProject.image_urls.length > 0) {
+            currentProject.image_urls.forEach((imgUrl, index) => {
+                const imgWrapper = document.createElement('div');
+                imgWrapper.className = 'position-relative';
+                imgWrapper.style.width = '120px';
+                imgWrapper.style.height = '120px';
+
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = 'border rounded';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.cursor = 'pointer';
+                img.onclick = () => showImageOverlay(imgUrl);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1';
+                deleteBtn.style.padding = '2px 6px';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    imagesToDelete.push(imgUrl);
+                    imgWrapper.remove();
+                };
+
+                imgWrapper.appendChild(img);
+                imgWrapper.appendChild(deleteBtn);
+                imageGrid.appendChild(imgWrapper);
             });
         }
+
+        imageEditContainer.appendChild(imageGrid);
+
+        // File input for new images
+        const fileInputGroup = document.createElement('div');
+        fileInputGroup.className = 'mb-3';
+
+        const fileLabel = document.createElement('label');
+        fileLabel.className = 'form-label';
+        fileLabel.textContent = 'Add New Images (max 5 total)';
+        fileInputGroup.appendChild(fileLabel);
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.className = 'form-control';
+        fileInput.id = 'edit-image-input';
+        fileInput.accept = 'image/*';
+        fileInput.multiple = true;
+        fileInput.addEventListener('change', handleNewImageUpload);
+        fileInputGroup.appendChild(fileInput);
+
+        // Preview area for new images
+        const previewArea = document.createElement('div');
+        previewArea.id = 'edit-image-preview';
+        previewArea.className = 'd-flex flex-wrap gap-2 mt-2';
+        fileInputGroup.appendChild(previewArea);
+
+        // Compression status
+        const compressionStatus = document.createElement('div');
+        compressionStatus.id = 'edit-compression-status';
+        compressionStatus.className = 'text-muted small mt-2';
+        fileInputGroup.appendChild(compressionStatus);
+
+        imageEditContainer.appendChild(fileInputGroup);
+
+        carousel.replaceWith(imageEditContainer);
+    }
+
+    // TODO: Add video URL editing (if needed)
+}
+
+// Handle new image upload with compression
+async function handleNewImageUpload(e) {
+    const files = Array.from(e.target.files);
+    const previewArea = document.getElementById('edit-image-preview');
+    const statusDiv = document.getElementById('edit-compression-status');
+    const imageGrid = document.getElementById('edit-image-grid');
+
+    // Check total image count
+    const currentImageCount = imageGrid.querySelectorAll('.position-relative').length;
+    const totalImages = currentImageCount + newImagesToUpload.length + files.length;
+
+    if (totalImages > 5) {
+        alert('Maximum 5 images allowed per project');
+        e.target.value = '';
+        return;
+    }
+
+    try {
+        // Use shared compression utility
+        const compressed = await compressImages(files);
+        newImagesToUpload.push(...compressed);
+
+        // Update status immediately after compression (before async FileReader operations)
+        updateCompressionStatus('edit-compression-status', newImagesToUpload);
+
+        // Create previews for each compressed image
+        compressed.forEach((imgData) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const previewWrapper = document.createElement('div');
+                previewWrapper.className = 'position-relative';
+                previewWrapper.style.width = '120px';
+                previewWrapper.style.height = '120px';
+
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.className = 'border rounded';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1';
+                removeBtn.style.padding = '2px 6px';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => {
+                    const index = newImagesToUpload.findIndex(img => img.name === imgData.name);
+                    if (index > -1) newImagesToUpload.splice(index, 1);
+                    previewWrapper.remove();
+                    updateCompressionStatus('edit-compression-status', newImagesToUpload);
+                };
+
+                previewWrapper.appendChild(img);
+                previewWrapper.appendChild(removeBtn);
+                previewArea.appendChild(previewWrapper);
+            };
+            reader.readAsDataURL(imgData.file);
+        });
+
     } catch (error) {
-        console.error('Error loading genres:', error);
+        console.error('Compression error:', error);
+        statusDiv.innerHTML = '<span class="text-danger">Error compressing images</span>';
     }
 }
+
+
 
 // Save project changes
 async function saveProjectChanges() {
@@ -1172,6 +1305,7 @@ async function saveProjectChanges() {
         const termInput = document.getElementById('edit-term');
         const yearInput = document.getElementById('edit-year');
         const gameurlInput = document.getElementById('edit-gameurl');
+        const videolinkInput = document.getElementById('edit-videolink');
 
         if (!titleInput) {
             alert('Title field not found');
@@ -1185,6 +1319,67 @@ async function saveProjectChanges() {
             return;
         }
 
+        // === HANDLE IMAGE UPLOADS AND DELETIONS ===
+
+        // Start with current image URLs
+        let updatedImageUrls = [...(currentProject.image_urls || [])];
+
+        // Remove deleted images from array
+        if (imagesToDelete.length > 0) {
+            updatedImageUrls = updatedImageUrls.filter(url => !imagesToDelete.includes(url));
+
+            // Delete images from Supabase Storage
+            for (const imageUrl of imagesToDelete) {
+                try {
+                    // Extract filename from URL
+                    const urlParts = imageUrl.split('/');
+                    const fileName = urlParts[urlParts.length - 1];
+
+                    const { error: deleteError } = await supabaseClient.storage
+                        .from(STORAGE_BUCKETS.images)
+                        .remove([fileName]);
+
+                    if (deleteError) {
+                        console.error('Error deleting image from storage:', deleteError);
+                    }
+                } catch (error) {
+                    console.error('Error processing image deletion:', error);
+                }
+            }
+        }
+
+        // Upload new images
+        if (newImagesToUpload.length > 0) {
+            for (let i = 0; i < newImagesToUpload.length; i++) {
+                const imgData = newImagesToUpload[i];
+                const timestamp = Date.now();
+                const fileName = `${timestamp}_${i}_${imgData.name}`;
+
+                try {
+                    const { data, error } = await supabaseClient.storage
+                        .from(STORAGE_BUCKETS.images)
+                        .upload(fileName, imgData.file, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) {
+                        console.error('Error uploading image:', error);
+                        continue;
+                    }
+
+                    // Get public URL
+                    const { data: urlData } = supabaseClient.storage
+                        .from(STORAGE_BUCKETS.images)
+                        .getPublicUrl(fileName);
+
+                    updatedImageUrls.push(urlData.publicUrl);
+                } catch (error) {
+                    console.error('Error processing image upload:', error);
+                }
+            }
+        }
+
         // Build update object with all edited fields
         const updateData = {
             title: newTitle,
@@ -1195,10 +1390,13 @@ async function saveProjectChanges() {
             term: termInput ? termInput.value.trim() || null : currentProject.term,
             year: yearInput ? (yearInput.value ? parseInt(yearInput.value) : null) : currentProject.year,
             gameurl: gameurlInput ? gameurlInput.value.trim() || null : currentProject.gameurl,
+            videolink: videolinkInput ? videolinkInput.value.trim() || null : currentProject.videolink,
             // Collect tag data
             keywords: collectTagsFromEditor('edit-keywords'),
             genres: collectTagsFromEditor('edit-genres'),
-            techused: collectTagsFromEditor('edit-tech')
+            techused: collectTagsFromEditor('edit-tech'),
+            // Update image URLs
+            image_urls: updatedImageUrls
         };
 
         // Note: creators and instructors require junction table updates, handled separately

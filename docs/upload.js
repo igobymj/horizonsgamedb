@@ -36,7 +36,7 @@ function setupTagInput(inputId, containerId, storageArray) {
 
             // Normalize keywords (lowercase)
             if (isKeywordInput) {
-                value = value.toLowerCase();
+                value = normalizeKeyword(value);
             }
 
             // Check genre limit
@@ -107,34 +107,17 @@ document.getElementById('images').addEventListener('change', async (e) => {
     }
 
     previewContainer.innerHTML = '';
-    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Compressing images...';
     compressedImages = [];
 
     try {
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const originalSize = (file.size / 1024 / 1024).toFixed(2);
+        // Use shared compression utility
+        compressedImages = await compressImages(files);
 
-            // Compress image
-            const options = {
-                maxSizeMB: 0.5,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-                fileType: 'image/jpeg'
-            };
+        // Update status immediately after compression (before async FileReader operations)
+        updateCompressionStatus('compression-status', compressedImages);
 
-            const compressedFile = await imageCompression(file, options);
-            const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
-
-            // Store compressed file with metadata
-            compressedImages.push({
-                file: compressedFile,
-                originalSize: originalSize,
-                compressedSize: compressedSize,
-                name: file.name
-            });
-
-            // Create preview
+        // Create previews for each compressed image
+        compressedImages.forEach((imgData, index) => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const previewDiv = document.createElement('div');
@@ -150,46 +133,24 @@ document.getElementById('images').addEventListener('change', async (e) => {
                 removeBtn.innerHTML = '&times;';
                 removeBtn.type = 'button';
                 removeBtn.onclick = () => {
-                    const index = compressedImages.findIndex(img => img.name === file.name);
-                    if (index > -1) compressedImages.splice(index, 1);
+                    const idx = compressedImages.findIndex(img => img.name === imgData.name);
+                    if (idx > -1) compressedImages.splice(idx, 1);
                     previewDiv.remove();
-                    updateCompressionStatus();
+                    updateCompressionStatus('compression-status', compressedImages);
                 };
 
                 previewDiv.appendChild(img);
                 previewDiv.appendChild(removeBtn);
                 previewContainer.appendChild(previewDiv);
             };
-            reader.readAsDataURL(compressedFile);
-        }
-
-        updateCompressionStatus();
+            reader.readAsDataURL(imgData.file);
+        });
 
     } catch (error) {
         console.error('Compression error:', error);
         statusDiv.innerHTML = '<span class="text-danger">Error compressing images</span>';
     }
 });
-
-function updateCompressionStatus() {
-    const statusDiv = document.getElementById('compression-status');
-
-    if (compressedImages.length === 0) {
-        statusDiv.innerHTML = '';
-        return;
-    }
-
-    const totalOriginal = compressedImages.reduce((sum, img) => sum + parseFloat(img.originalSize), 0);
-    const totalCompressed = compressedImages.reduce((sum, img) => sum + parseFloat(img.compressedSize), 0);
-    const savings = ((1 - totalCompressed / totalOriginal) * 100).toFixed(0);
-
-    statusDiv.innerHTML = `
-        <i class="fas fa-check-circle text-success me-2"></i>
-        ${compressedImages.length} image(s) compressed: 
-        ${totalOriginal.toFixed(2)}MB → ${totalCompressed.toFixed(2)}MB 
-        (${savings}% smaller)
-    `;
-}
 
 // ===== FORM SUBMISSION =====
 
@@ -486,27 +447,6 @@ function showKeywordConfirmModal(keyword) {
     });
 }
 
-// Check if keyword is new (doesn't exist in database)
-async function isNewKeyword(keyword) {
-    try {
-        const { data, error } = await supabaseClient
-            .from(TABLES.keywords)
-            .select('keyword')
-            .eq('keyword', keyword)
-            .maybeSingle();
-
-        if (error) {
-            console.error('Error checking keyword:', error);
-            return false; // Assume it exists on error to be safe
-        }
-
-        return !data; // Returns true if keyword doesn't exist
-    } catch (error) {
-        console.error('Error checking keyword:', error);
-        return false;
-    }
-}
-
 // Load people for autocomplete (creators and instructors)
 async function loadPeople() {
     try {
@@ -531,48 +471,7 @@ async function loadPeople() {
     }
 }
 
-// Insert new keyword to database if it doesn't exist
-async function insertKeywordIfNew(keyword) {
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) return;
-
-        const { error } = await supabaseClient
-            .from(TABLES.keywords)
-            .insert([{
-                keyword: keyword,
-                created_by: session.user.id
-            }]);
-
-        // Ignore duplicate key errors (constraint violation)
-        if (error && !error.message.includes('duplicate') && error.code !== '23505') {
-            console.error('Error inserting keyword:', error);
-        }
-    } catch (error) {
-        console.error('Error inserting keyword:', error);
-    }
-}
-
-// Load genres for upload form datalist
+// Load genres for upload form datalist (uses shared utility)
 async function loadGenresUpload() {
-    try {
-        const { data: genres, error } = await supabaseClient
-            .from(TABLES.genres)
-            .select('genre')
-            .order('genre');
-
-        if (error) {
-            console.error('Error loading genres:', error);
-            return;
-        }
-
-        const datalist = document.getElementById('genres-list');
-        genres.forEach(g => {
-            const option = document.createElement('option');
-            option.value = g.genre;
-            datalist.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error loading genres:', error);
-    }
+    await loadGenres('genres-list');
 }
