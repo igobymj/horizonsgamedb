@@ -94,6 +94,25 @@ async function copyToClipboard(code) {
     }
 }
 
+// Toggle code activation status
+async function toggleCodeActivation(codeId, setActive) {
+    try {
+        const { error } = await supabaseClient
+            .from(TABLES.invites)
+            .update({ is_active: setActive })
+            .eq('id', codeId);
+
+        if (error) throw error;
+
+        const action = setActive ? 'activated' : 'deactivated';
+        showSuccess(`Code ${action} successfully`);
+        loadInvitationCodes(); // Reload the table
+    } catch (error) {
+        console.error('Toggle error:', error);
+        showError(error.message || 'Failed to update code status');
+    }
+}
+
 // Delete invitation code
 async function deleteCode(codeId, code) {
     if (!confirm(`Are you sure you want to delete the code "${code}"?`)) {
@@ -141,9 +160,24 @@ async function loadInvitationCodes() {
 
         tableBody.innerHTML = codes.map(code => {
             const isUsed = code.used_at !== null;
-            const statusBadge = isUsed
-                ? '<span class="badge bg-secondary status-badge">Used</span>'
-                : '<span class="badge bg-success status-badge">Active</span>';
+            const isInactive = code.is_active === false;
+
+            let statusBadge;
+            if (isUsed) {
+                statusBadge = '<span class="badge bg-secondary status-badge">Used</span>';
+            } else if (isInactive) {
+                statusBadge = '<span class="badge bg-danger status-badge">Inactive</span>';
+            } else {
+                statusBadge = '<span class="badge bg-success status-badge">Active</span>';
+            }
+
+            // Show toggle button only if not used
+            const toggleButton = !isUsed ? `
+                <button class="btn btn-sm btn-outline-${isInactive ? 'success' : 'warning'} me-1" 
+                        onclick="toggleCodeActivation('${code.id}', ${!isInactive})">
+                    <i class="fas fa-${isInactive ? 'check' : 'ban'}"></i> ${isInactive ? 'Activate' : 'Deactivate'}
+                </button>
+            ` : '';
 
             return `
                 <tr>
@@ -157,6 +191,7 @@ async function loadInvitationCodes() {
                                 onclick="copyToClipboard('${code.code}')">
                             <i class="fas fa-copy"></i> Copy
                         </button>
+                        ${toggleButton}
                         <button class="btn btn-sm btn-outline-danger" 
                                 onclick="deleteCode('${code.id}', '${code.code}')">
                             <i class="fas fa-trash"></i> Delete

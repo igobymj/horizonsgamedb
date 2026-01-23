@@ -388,12 +388,13 @@ window.showProjectDetails = function (projectID) {
                 carouselInner.appendChild(item);
             });
 
-            // Carousel controls
+            // Carousel controls with enhanced visibility
             const prevBtn = document.createElement('button');
             prevBtn.className = 'carousel-control-prev';
             prevBtn.type = 'button';
             prevBtn.setAttribute('data-bs-target', `#${carouselId}`);
             prevBtn.setAttribute('data-bs-slide', 'prev');
+            prevBtn.style.width = '10%';
             prevBtn.innerHTML = '<span class="carousel-control-prev-icon" aria-hidden="true"></span>';
 
             const nextBtn = document.createElement('button');
@@ -401,6 +402,7 @@ window.showProjectDetails = function (projectID) {
             nextBtn.type = 'button';
             nextBtn.setAttribute('data-bs-target', `#${carouselId}`);
             nextBtn.setAttribute('data-bs-slide', 'next');
+            nextBtn.style.width = '10%';
             nextBtn.innerHTML = '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
 
             // Assemble carousel
@@ -850,7 +852,310 @@ function convertToEditMode() {
         link.replaceWith(input);
     }
 
+    // Convert array fields to tag editors
+    convertArrayFieldsToTagEditors();
+
     console.log('Edit mode enabled - all text fields are now editable');
+}
+
+// Convert array fields (creators, keywords, etc.) to tag editors
+function convertArrayFieldsToTagEditors() {
+    if (!currentProject) return;
+
+    const modalDetails = document.getElementById('modal-details');
+
+    // Helper function to create tag editor
+    function createTagEditor(containerId, tags, placeholder) {
+        const container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'tag-editor mb-3';
+
+        // Tags display area
+        const tagsDisplay = document.createElement('div');
+        tagsDisplay.className = 'tags-display mb-2';
+        tagsDisplay.id = `${containerId}-display`;
+
+        // Render existing tags
+        tags.forEach(tag => {
+            const badge = createTagBadge(tag, containerId);
+            tagsDisplay.appendChild(badge);
+        });
+
+        // Input for new tags
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control';
+        input.placeholder = placeholder;
+        input.id = `${containerId}-input`;
+
+        // Add datalist for genres
+        if (containerId === 'edit-genres') {
+            input.setAttribute('list', 'edit-genres-datalist');
+
+            // Create datalist if it doesn't exist
+            if (!document.getElementById('edit-genres-datalist')) {
+                const datalist = document.createElement('datalist');
+                datalist.id = 'edit-genres-datalist';
+                document.body.appendChild(datalist);
+
+                // Load genres from database
+                loadGenresForEdit();
+            }
+        }
+
+        // Add tag on Enter
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                let value = input.value.trim();
+
+                console.log('Tag input - containerId:', containerId, 'value:', value);
+
+                // Apply validation based on field type
+                const isKeywords = containerId === 'edit-keywords';
+                const isGenres = containerId === 'edit-genres';
+
+                console.log('Validation flags - isKeywords:', isKeywords, 'isGenres:', isGenres);
+
+                // Normalize keywords to lowercase
+                if (isKeywords && value) {
+                    console.log('Converting keyword to lowercase:', value);
+                    value = value.toLowerCase();
+                }
+
+                // Check genre limit (max 3)
+                if (isGenres) {
+                    const currentGenres = tagsDisplay.querySelectorAll('.badge').length;
+                    console.log('Current genre count:', currentGenres);
+                    if (currentGenres >= 3) {
+                        alert('You can only add up to 3 genres');
+                        input.value = '';
+                        return;
+                    }
+                }
+
+                // Check for duplicates
+                if (value) {
+                    const existingTags = Array.from(tagsDisplay.querySelectorAll('.badge')).map(badge =>
+                        badge.textContent.replace(/\s*×\s*$/, '').trim()
+                    );
+
+                    console.log('Existing tags:', existingTags);
+
+                    if (existingTags.includes(value)) {
+                        alert('This tag already exists');
+                        input.value = '';
+                        return;
+                    }
+
+
+                    // Keyword validation: check if new and confirm
+                    if (isKeywords) {
+                        const isNew = await isNewKeyword(value);
+                        if (isNew) {
+                            const confirmed = confirm(`"${value}" is a new keyword. Do you want to add it to the database?`);
+                            if (!confirmed) {
+                                input.value = '';
+                                return;
+                            }
+                            await insertKeywordIfNew(value);
+                        }
+                    }
+
+                    // Genre validation: must exist in database
+                    if (isGenres) {
+                        const isValid = await isValidGenre(value);
+                        if (!isValid) {
+                            alert(`"${value}" is not a valid genre. Please select from the existing genres.`);
+                            input.value = '';
+                            return;
+                        }
+                    }
+                    const badge = createTagBadge(value, containerId);
+                    tagsDisplay.appendChild(badge);
+                    input.value = '';
+                }
+            }
+        });
+
+        container.appendChild(tagsDisplay);
+        container.appendChild(input);
+
+        // Add hint text
+        const hint = document.createElement('small');
+        hint.className = 'text-muted';
+        let hintText = 'Press Enter to add';
+        if (containerId === 'edit-genres') {
+            hintText = 'Press Enter after each genre (max 3)';
+        } else if (containerId === 'edit-keywords') {
+            hintText = 'Press Enter after each keyword';
+        } else if (containerId === 'edit-creators' || containerId === 'edit-instructors') {
+            hintText = 'Press Enter after each name';
+        } else if (containerId === 'edit-tech') {
+            hintText = 'Press Enter after each technology';
+        }
+        hint.textContent = hintText;
+        container.appendChild(hint);
+
+        return container;
+    }
+
+    // Helper to create removable tag badge
+    function createTagBadge(text, containerId) {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-secondary me-1 mb-1';
+        badge.style.cursor = 'pointer';
+        badge.innerHTML = `${text} <i class="fas fa-times ms-1"></i>`;
+        badge.onclick = () => badge.remove();
+        return badge;
+    }
+
+    // Find and replace creators
+    const creatorsElements = Array.from(modalDetails.querySelectorAll('h6')).filter(h6 =>
+        h6.textContent.includes('Creator(s):')
+    );
+    if (creatorsElements.length > 0) {
+        const editor = createTagEditor('edit-creators', currentProject.creators || [], 'Add creator name');
+        creatorsElements[0].replaceWith(editor);
+    }
+
+    // Find and replace instructors
+    const instructorsElements = Array.from(modalDetails.querySelectorAll('h6')).filter(h6 =>
+        h6.textContent.includes('Instructor(s):')
+    );
+    if (instructorsElements.length > 0) {
+        const editor = createTagEditor('edit-instructors', currentProject.instructors || [], 'Add instructor name');
+        instructorsElements[0].replaceWith(editor);
+    }
+
+    // Find and replace keywords
+    const keywordsElements = Array.from(modalDetails.querySelectorAll('p')).filter(p =>
+        p.innerHTML.includes('<strong>Keywords:</strong>')
+    );
+    if (keywordsElements.length > 0) {
+        const editor = createTagEditor('edit-keywords', currentProject.keywords || [], 'Add keyword');
+        keywordsElements[0].replaceWith(editor);
+    }
+
+    // Find and replace genres
+    const genreElements = Array.from(modalDetails.querySelectorAll('p.fw-bold')).filter(p =>
+        p.textContent === ((currentProject.genres || []).join(', ') || 'Not specified')
+    );
+    if (genreElements.length > 0) {
+        const editor = createTagEditor('edit-genres', currentProject.genres || [], 'Add genre');
+        genreElements[0].replaceWith(editor);
+    }
+
+    // Find and replace tech used
+    const techElements = Array.from(modalDetails.querySelectorAll('p')).filter(p =>
+        p.innerHTML.includes('<strong>Tech Used:</strong>')
+    );
+    if (techElements.length > 0) {
+        const editor = createTagEditor('edit-tech', currentProject.techUsed || [], 'Add technology');
+        techElements[0].replaceWith(editor);
+    }
+}
+
+// Helper function to collect tags from a tag editor
+function collectTagsFromEditor(editorId) {
+    const display = document.getElementById(`${editorId}-display`);
+    if (!display) return [];
+
+    const badges = display.querySelectorAll('.badge');
+    return Array.from(badges).map(badge => {
+        // Extract text without the × icon
+        return badge.textContent.replace(/\s*×\s*$/, '').trim();
+    });
+}
+
+// Check if keyword is new (doesn't exist in database)
+async function isNewKeyword(keyword) {
+    try {
+        const { data, error } = await supabaseClient
+            .from(TABLES.keywords)
+            .select('keyword')
+            .eq('keyword', keyword)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error checking keyword:', error);
+            return false;
+        }
+
+        return !data; // Returns true if keyword doesn't exist
+    } catch (error) {
+        console.error('Error checking keyword:', error);
+        return false;
+    }
+}
+
+// Insert new keyword to database
+async function insertKeywordIfNew(keyword) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const { error } = await supabaseClient
+            .from(TABLES.keywords)
+            .insert([{
+                keyword: keyword,
+                created_by: session.user.id
+            }]);
+
+        if (error && !error.message.includes('duplicate') && error.code !== '23505') {
+            console.error('Error inserting keyword:', error);
+        }
+    } catch (error) {
+        console.error('Error inserting keyword:', error);
+    }
+}
+
+// Check if genre exists in database
+async function isValidGenre(genre) {
+    try {
+        const { data, error } = await supabaseClient
+            .from(TABLES.genres)
+            .select('genre')
+            .eq('genre', genre)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error checking genre:', error);
+            return false;
+        }
+
+        return !!data; // Returns true if genre exists
+    } catch (error) {
+        console.error('Error checking genre:', error);
+        return false;
+    }
+}
+
+// Load genres for edit mode datalist
+async function loadGenresForEdit() {
+    try {
+        const { data: genres, error } = await supabaseClient
+            .from(TABLES.genres)
+            .select('genre')
+            .order('genre');
+
+        if (error) {
+            console.error('Error loading genres:', error);
+            return;
+        }
+
+        const datalist = document.getElementById('edit-genres-datalist');
+        if (datalist) {
+            datalist.innerHTML = ''; // Clear existing options
+            genres.forEach(g => {
+                const option = document.createElement('option');
+                option.value = g.genre;
+                datalist.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading genres:', error);
+    }
 }
 
 // Save project changes
@@ -889,8 +1194,16 @@ async function saveProjectChanges() {
             classinfo: classinfoInput ? classinfoInput.value.trim() || null : currentProject.classinfo,
             term: termInput ? termInput.value.trim() || null : currentProject.term,
             year: yearInput ? (yearInput.value ? parseInt(yearInput.value) : null) : currentProject.year,
-            gameurl: gameurlInput ? gameurlInput.value.trim() || null : currentProject.gameurl
+            gameurl: gameurlInput ? gameurlInput.value.trim() || null : currentProject.gameurl,
+            // Collect tag data
+            keywords: collectTagsFromEditor('edit-keywords'),
+            genres: collectTagsFromEditor('edit-genres'),
+            techused: collectTagsFromEditor('edit-tech')
         };
+
+        // Note: creators and instructors require junction table updates, handled separately
+        const newCreators = collectTagsFromEditor('edit-creators');
+        const newInstructors = collectTagsFromEditor('edit-instructors');
 
         // Update project in database
         const { error } = await supabaseClient
