@@ -3,7 +3,8 @@
 /* Enhance the card appearance */
 .game-card {
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    height: 100%; /* Important for equal height cards */
+    height: 100%;
+    /* Important for equal height cards */
     display: flex;
     flex-direction: column;
 }
@@ -14,7 +15,8 @@
 }
 
 .game-card .card-body {
-    flex-grow: 1; /* Allows body to take up available space */
+    flex-grow: 1;
+    /* Allows body to take up available space */
 }
 
 /* Style for the badge tags */
@@ -97,6 +99,7 @@
     height: 80%;
     max-height: 675px;
 }
+
 /* Enhanced carousel navigation arrows */
 .carousel-control-prev,
 .carousel-control-next {
@@ -121,4 +124,27 @@
 .carousel-control-prev-icon:hover,
 .carousel-control-next-icon:hover {
     background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Test Project Banner - Horizontal Top Banner */
+.test-project-banner {
+    position: relative;
+    /* Changed from absolute to flow with content */
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: #000;
+    text-align: center;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    font-style: italic;
+    /* Added italic */
+    letter-spacing: 0.5px;
+    z-index: 10;
+    border-radius: 0.375rem 0.375rem 0 0;
+    /* Match card border radius */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.test-project-banner i {
+    margin-right: 4px;
 }

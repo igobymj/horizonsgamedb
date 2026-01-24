@@ -152,6 +152,15 @@ function renderProjects(projects) {
 
         const card = document.createElement('div');
         card.className = 'card game-card shadow-sm';
+        card.style.position = 'relative'; // For absolute positioning of banner
+
+        // Add test project banner if flag is set
+        if (project.testproject_flag) {
+            const banner = document.createElement('div');
+            banner.className = 'test-project-banner';
+            banner.innerHTML = '<i class="fas fa-flask"></i> not an actual project';
+            card.appendChild(banner);
+        }
 
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body d-flex flex-column';
@@ -744,17 +753,43 @@ function convertToEditMode() {
     const modalTitle = document.getElementById('projectDetailModalLabel');
     if (modalTitle && !modalTitle.querySelector('input')) {
         const currentTitle = modalTitle.textContent;
+        // Ensure modal title container takes full width of header
+        modalTitle.className = 'modal-title fs-3 fw-bold w-100 me-3';
         modalTitle.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex align-items-center justify-content-between w-100 gap-3';
 
         const titleInput = document.createElement('input');
         titleInput.type = 'text';
         titleInput.className = 'form-control form-control-lg';
         titleInput.value = currentTitle;
         titleInput.id = 'edit-title';
-        titleInput.style.fontSize = 'inherit';
-        titleInput.style.fontWeight = 'inherit';
+        titleInput.style.fontSize = '1.5rem';
+        titleInput.style.fontWeight = 'bold';
+        titleInput.style.flex = '1';
 
-        modalTitle.appendChild(titleInput);
+        const toggleWrapper = document.createElement('div');
+        toggleWrapper.className = 'form-check form-switch flex-shrink-0';
+
+        const toggleInput = document.createElement('input');
+        toggleInput.className = 'form-check-input';
+        toggleInput.type = 'checkbox';
+        toggleInput.role = 'switch';
+        toggleInput.id = 'edit-testproject-flag';
+        toggleInput.checked = currentProject.testproject_flag || false;
+
+        const toggleLabel = document.createElement('label');
+        toggleLabel.className = 'form-check-label';
+        toggleLabel.htmlFor = 'edit-testproject-flag';
+        toggleLabel.innerHTML = '<i class="fas fa-flask"></i> Test Project';
+
+        toggleWrapper.appendChild(toggleInput);
+        toggleWrapper.appendChild(toggleLabel);
+
+        wrapper.appendChild(titleInput);
+        wrapper.appendChild(toggleWrapper);
+        modalTitle.appendChild(wrapper);
     }
 
     // Make text fields editable by finding them and converting to inputs/textareas
@@ -1368,6 +1403,7 @@ async function saveProjectChanges() {
         const yearInput = document.getElementById('edit-year');
         const gameurlInput = document.getElementById('edit-gameurl');
         const videolinkInput = document.getElementById('edit-videolink');
+        const testProjectInput = document.getElementById('edit-testproject-flag');
 
         if (!titleInput) {
             showWarning('Title field not found', 'Error', 'error');
@@ -1453,6 +1489,7 @@ async function saveProjectChanges() {
             year: yearInput ? (yearInput.value ? parseInt(yearInput.value) : null) : currentProject.year,
             gameurl: gameurlInput ? gameurlInput.value.trim() || null : currentProject.gameurl,
             videolink: videolinkInput ? videolinkInput.value.trim() || null : currentProject.videolink,
+            testproject_flag: testProjectInput ? testProjectInput.checked : (currentProject.testproject_flag || false),
             // Collect tag data
             keywords: collectTagsFromEditor('edit-keywords'),
             genres: collectTagsFromEditor('edit-genres'),
