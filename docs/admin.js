@@ -451,6 +451,39 @@ if (batchDeleteBtn) {
             const idsToDelete = Array.from(selectedKeywordIds);
             console.log('Deleting keywords with IDs:', idsToDelete);
 
+            // First, get the keyword names for the IDs we're deleting
+            const { data: keywordsToDelete, error: fetchKeywordsError } = await supabaseClient
+                .from(TABLES.keywords)
+                .select('keyword')
+                .in('id', idsToDelete);
+
+            if (fetchKeywordsError) throw fetchKeywordsError;
+
+            const keywordNames = keywordsToDelete.map(k => k.keyword);
+            console.log('Keyword names to remove from projects:', keywordNames);
+
+            // Get all projects that have any of these keywords
+            const { data: projects, error: fetchProjectsError } = await supabaseClient
+                .from(TABLES.projects)
+                .select('id, keywords')
+                .or(keywordNames.map(name => `keywords.cs.{${name}}`).join(','));
+
+            if (fetchProjectsError) throw fetchProjectsError;
+
+            // Remove the keywords from each project
+            if (projects && projects.length > 0) {
+                for (const project of projects) {
+                    const updatedKeywords = project.keywords.filter(k => !keywordNames.includes(k));
+                    const { error: updateError } = await supabaseClient
+                        .from(TABLES.projects)
+                        .update({ keywords: updatedKeywords })
+                        .eq('id', project.id);
+
+                    if (updateError) throw updateError;
+                }
+            }
+
+            // Then delete the keywords themselves
             const { error } = await supabaseClient
                 .from(TABLES.keywords)
                 .delete()
@@ -459,7 +492,7 @@ if (batchDeleteBtn) {
             if (error) throw error;
 
             console.log('Delete successful');
-            showSuccess(`${count} keywords deleted successfully`);
+            showSuccess(`${count} keywords deleted successfully from ${projects?.length || 0} project(s)`);
             loadKeywords(); // Reload list (clears selection)
 
         } catch (error) {
@@ -488,6 +521,28 @@ async function deleteKeyword(id, name) {
     if (!confirmed) return;
 
     try {
+        // First, get all projects that have this keyword
+        const { data: projects, error: fetchError } = await supabaseClient
+            .from(TABLES.projects)
+            .select('id, keywords')
+            .contains('keywords', [name]);
+
+        if (fetchError) throw fetchError;
+
+        // Remove the keyword from each project
+        if (projects && projects.length > 0) {
+            for (const project of projects) {
+                const updatedKeywords = project.keywords.filter(k => k !== name);
+                const { error: updateError } = await supabaseClient
+                    .from(TABLES.projects)
+                    .update({ keywords: updatedKeywords })
+                    .eq('id', project.id);
+
+                if (updateError) throw updateError;
+            }
+        }
+
+        // Then delete the keyword itself
         const { error } = await supabaseClient
             .from(TABLES.keywords)
             .delete()
@@ -495,7 +550,7 @@ async function deleteKeyword(id, name) {
 
         if (error) throw error;
 
-        showSuccess(`Keyword "${name}" deleted successfully`);
+        showSuccess(`Keyword "${name}" deleted successfully from ${projects?.length || 0} project(s)`);
         // If it was selected, remove from selection
         if (selectedKeywordIds.has(id)) {
             selectedKeywordIds.delete(id);
