@@ -1922,10 +1922,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('profile-link').style.display = 'inline-block';
         document.getElementById('logout-btn').style.display = 'inline-block';
 
-        // Fetch and display user's name
+        // Fetch and display user's name and role
         const { data: person, error: personError } = await supabaseClient
             .from(TABLES.people)
-            .select('name')
+            .select('name, user_type')
             .eq('email', session.user.email)
             .maybeSingle();
 
@@ -1933,9 +1933,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error fetching user name:', personError);
         }
 
-        if (person && person.name) {
-            document.getElementById('user-name').textContent = person.name;
-            document.getElementById('user-greeting').style.display = 'inline-block';
+        if (person) {
+            if (person.name) {
+                document.getElementById('user-name').textContent = person.name;
+                document.getElementById('user-greeting').style.display = 'inline-block';
+            }
+
+            // Show Admin Panel button if user is admin
+            if (person.user_type === 'admin') {
+                document.getElementById('admin-link').style.display = 'inline-block';
+            }
         }
     }
     loadInstitutions(); // Load institutions for filter

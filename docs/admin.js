@@ -282,4 +282,354 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupLogout();
     loadInvitationCodes();
+    loadGenres(); // Load genres on startup
+    loadKeywords(); // Load keywords on startup
+    loadProfanityList(); // Load bad words list
 });
+
+// ... (existing code) ...
+
+// ===== KEYWORD MANAGEMENT =====
+
+let allKeywords = []; // Store locally for filtering
+let selectedKeywordIds = new Set(); // Store selected IDs
+
+// Load keywords into table
+async function loadKeywords() {
+    const tableBody = document.getElementById('keywords-table-body');
+    const countBadge = document.getElementById('keyword-count');
+
+    try {
+        const { data: keywords, error } = await supabaseClient
+            .from(TABLES.keywords)
+            .select('*')
+            .order('keyword');
+
+        if (error) throw error;
+
+        allKeywords = keywords || [];
+
+        // Flag bad words
+        allKeywords.forEach(k => {
+            k.isBadWord = containsProfanity(k.keyword);
+        });
+
+        // Sort: Bad words first, then alphabetical
+        allKeywords.sort((a, b) => {
+            if (a.isBadWord && !b.isBadWord) return -1;
+            if (!a.isBadWord && b.isBadWord) return 1;
+            return a.keyword.localeCompare(b.keyword);
+        });
+
+        if (countBadge) {
+            countBadge.textContent = allKeywords.length;
+        }
+
+        // Reset selection
+        selectedKeywordIds.clear();
+        updateBatchDeleteUI();
+
+        renderKeywords(allKeywords);
+
+    } catch (error) {
+        console.error('Load keywords error:', error);
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading keywords: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Render keywords table
+function renderKeywords(keywordsToRender) {
+    const tableBody = document.getElementById('keywords-table-body');
+
+    if (!keywordsToRender || keywordsToRender.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                    No keywords found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = keywordsToRender.map(k => {
+        const isBad = k.isBadWord;
+        const rowClass = isBad ? 'table-danger' : '';
+        const warningIcon = isBad ? '<i class="fas fa-exclamation-triangle text-danger me-2" title="Possible offensive term"></i>' : '';
+
+        return `
+        <tr class="${rowClass}">
+            <td class="text-center">
+                <input class="form-check-input keyword-checkbox" type="checkbox" 
+                       value="${k.id}" ${selectedKeywordIds.has(k.id) ? 'checked' : ''}>
+            </td>
+            <td class="align-middle fw-bold">
+                ${warningIcon}${k.keyword}
+            </td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger btn-delete-keyword" 
+                        data-id="${k.id}" 
+                        data-keyword="${k.keyword.replace(/"/g, '&quot;')}">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+
+    // Re-attach listeners to new checkboxes
+    document.querySelectorAll('.keyword-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                selectedKeywordIds.add(e.target.value);
+            } else {
+                selectedKeywordIds.delete(e.target.value);
+            }
+            updateBatchDeleteUI();
+        });
+    });
+}
+
+// Update Batch Delete Button UI
+function updateBatchDeleteUI() {
+    const btn = document.getElementById('delete-selected-btn');
+    const countSpan = document.getElementById('selected-count');
+
+    if (!btn || !countSpan) {
+        console.warn('Batch delete UI elements not found');
+        return;
+    }
+
+    countSpan.textContent = selectedKeywordIds.size;
+
+    if (selectedKeywordIds.size > 0) {
+        btn.classList.remove('d-none');
+    } else {
+        btn.classList.add('d-none');
+    }
+}
+
+// Delete Keyword Listener (Delegated)
+document.getElementById('keywords-table-body').addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-delete-keyword');
+    if (btn) {
+        const id = btn.dataset.id;
+        const keyword = btn.dataset.keyword;
+        deleteKeyword(id, keyword);
+    }
+});
+
+// Batch Delete Logic
+const batchDeleteBtn = document.getElementById('delete-selected-btn');
+console.log('Batch delete button found:', batchDeleteBtn);
+if (batchDeleteBtn) {
+    batchDeleteBtn.addEventListener('click', async () => {
+        console.log('Batch delete clicked, selected IDs:', Array.from(selectedKeywordIds));
+        const count = selectedKeywordIds.size;
+        if (count === 0) {
+            console.log('No keywords selected, aborting');
+            return;
+        }
+
+        console.log('Showing confirmation modal...');
+        const confirmed = await showConfirmModal(
+            `Are you sure you want to delete ${count} selected keywords?\n\nWARNING: usage of these keywords will be removed from all projects!`,
+            'Batch Delete Keywords',
+            true
+        );
+
+        console.log('Modal confirmed:', confirmed);
+        if (!confirmed) return;
+
+        try {
+            const idsToDelete = Array.from(selectedKeywordIds);
+            console.log('Deleting keywords with IDs:', idsToDelete);
+
+            const { error } = await supabaseClient
+                .from(TABLES.keywords)
+                .delete()
+                .in('id', idsToDelete);
+
+            if (error) throw error;
+
+            console.log('Delete successful');
+            showSuccess(`${count} keywords deleted successfully`);
+            loadKeywords(); // Reload list (clears selection)
+
+        } catch (error) {
+            console.error('Batch delete error:', error);
+            showWarning(error.message || 'Failed to delete selected keywords', 'Error', 'error');
+        }
+    });
+}
+
+// Filter keywords
+document.getElementById('keyword-search').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const filtered = allKeywords.filter(k => k.keyword.toLowerCase().includes(query));
+    renderKeywords(filtered);
+});
+
+// Delete keyword
+async function deleteKeyword(id, name) {
+    console.log('Delete requested for:', id, name);
+    const confirmed = await showConfirmModal(
+        `Are you sure you want to delete the keyword "${name}"?\n\nWARNING: usage of this keyword will be removed from all projects!`,
+        'Delete Keyword',
+        true // isDestructive
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from(TABLES.keywords)
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        showSuccess(`Keyword "${name}" deleted successfully`);
+        // If it was selected, remove from selection
+        if (selectedKeywordIds.has(id)) {
+            selectedKeywordIds.delete(id);
+            updateBatchDeleteUI();
+        }
+        loadKeywords(); // Reload list
+
+    } catch (error) {
+        console.error('Delete keyword error:', error);
+        showWarning(error.message || 'Failed to delete keyword', 'Error', 'error');
+    }
+}
+
+
+// ===== GENRE MANAGEMENT =====
+
+// Load genres into table
+async function loadGenres() {
+    const tableBody = document.getElementById('genres-table-body');
+    const countBadge = document.getElementById('genre-count');
+
+    try {
+        const { data: genres, error } = await supabaseClient
+            .from(TABLES.genres)
+            .select('*')
+            .order('genre');
+
+        if (error) throw error;
+
+        countBadge.textContent = genres ? genres.length : 0;
+
+        if (!genres || genres.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="2" class="text-center text-muted py-4">
+                        No genres found. Add one on the left!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = genres.map(g => `
+            <tr>
+                <td class="align-middle fw-bold">${g.genre}</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="deleteGenre('${g.id}', '${g.genre.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        console.error('Load genres error:', error);
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>Error loading genres: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Add new genre
+document.getElementById('add-genre-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const input = document.getElementById('new-genre-input');
+    const genreName = input.value.trim();
+    const btn = document.getElementById('add-genre-btn');
+
+    if (btn.disabled) return; // Prevent double submission
+    if (!genreName) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+
+    try {
+        // Check if exists first (case-insensitive check handled by DB constraints usually, but good to be safe)
+        // Actually, we'll let unique constraint handle it or do a pre-check
+
+        // Insert
+        const { error } = await supabaseClient
+            .from(TABLES.genres)
+            .insert([{ genre: genreName }]);
+
+        if (error) {
+            if (error.code === '23505') { // Unique violation
+                throw new Error('This genre already exists!');
+            }
+            throw error;
+        }
+
+        showSuccess(`Genre "${genreName}" added successfully`);
+        input.value = '';
+        loadGenres(); // Reload list
+
+    } catch (error) {
+        console.error('Add genre error:', error);
+        showWarning(error.message || 'Failed to add genre', 'Error', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-plus me-2"></i>Add Genre';
+    }
+});
+
+// Delete genre
+async function deleteGenre(id, name) {
+    const confirmed = await showConfirmModal(
+        `Are you sure you want to delete the genre "${name}"?\n\nWARNING: usage of this genre will be removed from all projects!`,
+        'Delete Genre',
+        true // isDestructive
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from(TABLES.genres)
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        showSuccess(`Genre "${name}" deleted successfully`);
+        loadGenres(); // Reload list
+
+    } catch (error) {
+        console.error('Delete genre error:', error);
+        showWarning(error.message || 'Failed to delete genre', 'Error', 'error');
+    }
+}
+
+

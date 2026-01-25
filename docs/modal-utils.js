@@ -64,3 +64,59 @@ function showKeywordConfirmModal(keyword) {
         modal.show();
     });
 }
+
+/**
+ * Show generic confirmation modal
+ * @param {string} message - The message to display
+ * @param {string} title - The modal title
+ * @param {boolean} isDestructive - If true, styles as danger (red), otherwise primary (blue)
+ * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
+ */
+function showConfirmModal(message, title = 'Confirm Action', isDestructive = false) {
+    return new Promise((resolve) => {
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const modalHeader = document.getElementById('confirm-modal-header');
+        const modalTitle = document.getElementById('confirm-modal-title');
+        const modalMessage = document.getElementById('confirm-modal-message');
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+
+        // Clean up previous event listeners (handled by cleanup function below)
+
+        // Style based on type
+        modalHeader.className = 'modal-header text-white';
+        if (isDestructive) {
+            modalHeader.classList.add('bg-danger');
+            confirmBtn.className = 'btn btn-danger';
+        } else {
+            modalHeader.classList.add('bg-primary');
+            confirmBtn.className = 'btn btn-primary';
+        }
+
+        // Handle confirm
+        const handleConfirm = () => {
+            modal.hide();
+            cleanup();
+            resolve(true);
+        };
+
+        // Handle cancel/close
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        // Cleanup listeners to prevent memory leaks and duplicates
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            document.getElementById('confirmModal').removeEventListener('hidden.bs.modal', handleCancel);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+        modal.show();
+    });
+}

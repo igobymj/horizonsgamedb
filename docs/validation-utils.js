@@ -51,3 +51,50 @@ function getExistingTags(container, badgeSelector = '.badge') {
     const badges = container.querySelectorAll(badgeSelector);
     return Array.from(badges).map(badge => extractTagText(badge));
 }
+
+// ===== CONTENT MODERATION =====
+
+let profanityList = [];
+const FALLBACK_BAD_WORDS = ['badword', 'offensive', 'spam']; // Very minimal fallback
+
+/**
+ * Load profanity list from external source
+ * @returns {Promise<void>}
+ */
+async function loadProfanityList() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/web-mech/badwords/master/lib/lang.json');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        // The source is an object with "words": [list]
+        profanityList = data.words || [];
+        console.log(`Loaded ${profanityList.length} blocked terms`);
+    } catch (error) {
+        console.warn('Failed to load external profanity list, using fallback:', error);
+        profanityList = FALLBACK_BAD_WORDS;
+    }
+}
+
+/**
+ * Check if text contains profanity
+ * @param {string} text - Text to check
+ * @returns {boolean} - True if profanity found
+ */
+function containsProfanity(text) {
+    if (!text || !profanityList.length) return false;
+    const lower = text.toLowerCase();
+
+    return profanityList.some(word => {
+        // fast check
+        if (lower === word) return true;
+
+        // Check word boundaries (regex) for multi-word keywords
+        // Escape special regex chars in the bad word
+        const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i');
+        return regex.test(lower);
+    });
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
