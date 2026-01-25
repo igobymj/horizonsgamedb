@@ -102,6 +102,7 @@ async function fetchProjects() {
         }
 
         allProjects = data;
+        populateNameAutocomplete(); // Populate autocomplete lists
         renderProjects(allProjects);
 
     } catch (error) {
@@ -267,24 +268,64 @@ function renderProjects(projects) {
 
 }
 
+// Populate autocomplete datalists with unique names from all projects
+function populateNameAutocomplete() {
+    // Collect all unique creator names
+    const creatorNames = new Set();
+    const instructorNames = new Set();
+
+    allProjects.forEach(project => {
+        (project.creators || []).forEach(name => creatorNames.add(name));
+        (project.instructors || []).forEach(name => instructorNames.add(name));
+    });
+
+    // Populate creator names datalist
+    const creatorDatalist = document.getElementById('creator-names-list');
+    creatorDatalist.innerHTML = '';
+    Array.from(creatorNames).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        creatorDatalist.appendChild(option);
+    });
+
+    // Populate instructor names datalist
+    const instructorDatalist = document.getElementById('instructor-names-list');
+    instructorDatalist.innerHTML = '';
+    Array.from(instructorNames).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        instructorDatalist.appendChild(option);
+    });
+}
+
 // 4. Search Logic (Updates to search the 'allProjects' variable)
 document.getElementById('search-form').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const titleQuery = document.getElementById('search-title').value.toLowerCase();
     const creatorQuery = document.getElementById('search-creator').value.toLowerCase();
+    const instructorQuery = document.getElementById('search-instructor').value.toLowerCase();
+    const courseQuery = document.getElementById('search-course').value.toLowerCase();
     const institutionFilter = document.getElementById('filter-institution').value;
     const keywordSelect = document.getElementById('filter-keyword');
     const selectedKeywords = Array.from(keywordSelect.selectedOptions).map(opt => opt.value);
-    const genreFilter = document.getElementById('filter-genre').value;
+    const genreSelect = document.getElementById('filter-genre');
+    const selectedGenres = Array.from(genreSelect.selectedOptions).map(opt => opt.value);
 
     const filteredProjects = allProjects.filter(project => {
         // Title search - only in title field
         const titleMatch = !titleQuery || project.title?.toLowerCase().includes(titleQuery);
 
-        // Creator search
+        // Creator search - only student creators
         const creatorMatch = !creatorQuery ||
             (project.creators || []).some(creator => creator.toLowerCase().includes(creatorQuery));
+
+        // Instructor search - only instructors
+        const instructorMatch = !instructorQuery ||
+            (project.instructors || []).some(instructor => instructor.toLowerCase().includes(instructorQuery));
+
+        // Course search - only course name
+        const courseMatch = !courseQuery || project.coursename?.toLowerCase().includes(courseQuery);
 
         // Institution filter - exact match
         const institutionMatch = !institutionFilter || project.institution === institutionFilter;
@@ -293,10 +334,11 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
         const keywordMatch = selectedKeywords.length === 0 ||
             selectedKeywords.some(kw => (project.keywords || []).includes(kw));
 
-        // Genre filter - project must have the selected genre in its genres array
-        const genreMatch = !genreFilter || (project.genres || []).includes(genreFilter);
+        // Genre filter - project must have at least one of the selected genres
+        const genreMatch = selectedGenres.length === 0 ||
+            selectedGenres.some(genre => (project.genres || []).includes(genre));
 
-        return titleMatch && creatorMatch && institutionMatch && keywordMatch && genreMatch;
+        return titleMatch && creatorMatch && instructorMatch && courseMatch && institutionMatch && keywordMatch && genreMatch;
     });
 
     renderProjects(filteredProjects);
@@ -306,11 +348,18 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
 document.getElementById('clear-filters').addEventListener('click', function () {
     document.getElementById('search-title').value = '';
     document.getElementById('search-creator').value = '';
+    document.getElementById('search-instructor').value = '';
+    document.getElementById('search-course').value = '';
     document.getElementById('filter-institution').value = '';
-    document.getElementById('filter-genre').value = '';
+
     // Clear multi-select keyword filter
     const keywordSelect = document.getElementById('filter-keyword');
     Array.from(keywordSelect.options).forEach(opt => opt.selected = false);
+
+    // Clear multi-select genre filter
+    const genreSelect = document.getElementById('filter-genre');
+    Array.from(genreSelect.options).forEach(opt => opt.selected = false);
+
     renderProjects(allProjects);
 });
 
