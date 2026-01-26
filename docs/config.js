@@ -1,10 +1,17 @@
+// Check for production mode override via URL parameter
+// Usage: http://localhost:8000/?prod=true to use production tables locally
+const urlParams = new URLSearchParams(window.location.search);
+const FORCE_PROD = urlParams.get('prod') === 'true';
+
 // Detect if running locally
-const IS_DEV = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname.includes('127.0.0.1') ||
-    window.location.protocol === 'file:' ||  // Local file system
-    window.location.href.includes('beta') ||
-    window.location.href.includes('demo');
+// const IS_DEV = (window.location.hostname === 'localhost' ||
+//     window.location.hostname === '127.0.0.1' ||
+//     window.location.hostname.includes('127.0.0.1') ||
+//     window.location.protocol === 'file:' ||  // Local file system
+//     window.location.href.includes('beta') ||
+//     window.location.href.includes('demo')) && !FORCE_PROD;  // Override if ?prod=true
+
+const IS_DEV = false; // need to remove this for now. We're still in the midst of database migration
 
 // Supabase connection (same for both)
 const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
@@ -23,5 +30,5 @@ const TABLES = {
 
 // Storage bucket (optional - could also have games-images-dev)
 const STORAGE_BUCKETS = {
-    images: IS_DEV ? 'game-images-dev' : 'game-images'
+    images: IS_DEV ? 'project-images-dev' : 'project-images'
 };
