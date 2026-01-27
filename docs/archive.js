@@ -1964,6 +1964,11 @@ window.showUserProfile = async function (personName) {
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', async () => {
     fetchProjects(); // Fetch real data instead of using the array
+
+    // NOTE: Navigation state management is now handled by navbar.js
+    // The following code has been commented out to prevent conflicts
+
+    /* OLD NAVIGATION CODE - Now handled by navbar.js
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         document.getElementById('login-link').style.display = 'none';
@@ -1994,6 +1999,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
+    */
+
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
@@ -2008,7 +2015,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleBtn.innerHTML = '<i class="fas fa-search"></i> Show Search & Filters';
     });
 
-    // Logout button
+    // NOTE: Logout functionality is now handled by navbar.js
+    /* OLD LOGOUT CODE
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
@@ -2016,6 +2024,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'login.html';
         });
     }
+    */
 
     // Edit mode buttons
     document.getElementById('edit-project-btn').addEventListener('click', () => {

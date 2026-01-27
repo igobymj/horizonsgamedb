@@ -136,11 +136,8 @@ function showMessage(message, type) {
     }, 5000);
 }
 
-// Logout
-async function logout() {
-    await supabaseClient.auth.signOut();
-    window.location.href = 'login.html';
-}
+
+// NOTE: Logout function removed - now handled by navbar.js
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
@@ -155,7 +152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Event listeners
     document.getElementById('profile-form').addEventListener('submit', saveProfile);
-    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    // NOTE: Logout is now handled by navbar.js
 
     // Update privacy help text when toggle changes
     const isPublicToggle = document.getElementById('is-public');

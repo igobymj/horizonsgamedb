@@ -365,11 +365,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTagInput('genres-input', 'genres-container', genres);
     setupTagInput('techUsed-input', 'techUsed-container', techUsed);
 
-    // Logout button
+
+    // NOTE: Logout is now handled by navbar.js
+    /*
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
         window.location.href = 'login.html';
     });
+    */
+
 
 });
 
