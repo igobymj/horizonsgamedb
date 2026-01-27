@@ -13,11 +13,15 @@ const FORCE_PROD = urlParams.get('prod') === 'true';
 
 const IS_DEV = false; // need to remove this for now. We're still in the midst of database migration
 
-// Supabase connection (same for both)
-const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bGhlaGpib255cHlqaXloa2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNjkxNjEsImV4cCI6MjA3ODY0NTE2MX0.rWKrKSOCJBLVMPgSt5TAjjIYdFr6tO2Y7V0lQPDz9As';
+// Supabase connection (same for both) // TO DO these should be separate for prod and dev, eventually
+// const PROJECT_URL = 'https://xylhehjbonypyjiyhkkt.supabase.co/';
+// const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bGhlaGpib255cHlqaXloa2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNjkxNjEsImV4cCI6MjA3ODY0NTE2MX0.rWKrKSOCJBLVMPgSt5TAjjIYdFr6tO2Y7V0lQPDz9As';
 
-// Table names switch based on environment
+const PROJECT_URL = 'https://xrogfxbkjbjhlhqrdgon.supabase.co'
+const ANON_KEY = 'sb_publishable_V8RaJ7atfz4nGMleGZJ0DQ_ZQit7SeA';
+
+
+// Table names switch based on environment // TO DO this switch has been deprecated in favor of having two separate databases 
 const TABLES = {
     projects: IS_DEV ? '_projects_dev' : 'projects',
     institutions: IS_DEV ? '_institutions_dev' : 'institutions',
@@ -29,6 +33,4 @@ const TABLES = {
 };
 
 // Storage bucket (optional - could also have games-images-dev)
-const STORAGE_BUCKETS = {
-    images: IS_DEV ? 'project-images-dev' : 'project-images'
-};
+const STORAGE_BUCKET = 'project-images';

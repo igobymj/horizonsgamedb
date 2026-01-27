@@ -533,177 +533,9 @@ GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
 GRANT USAGE ON SCHEMA "public" TO "service_role";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GRANT ALL ON TABLE "public"."genres" TO "anon";
 GRANT ALL ON TABLE "public"."genres" TO "authenticated";
 GRANT ALL ON TABLE "public"."genres" TO "service_role";
-
 
 
 GRANT ALL ON SEQUENCE "public"."genres_id_seq" TO "anon";
@@ -711,11 +543,9 @@ GRANT ALL ON SEQUENCE "public"."genres_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."genres_id_seq" TO "service_role";
 
 
-
 GRANT ALL ON TABLE "public"."institutions" TO "anon";
 GRANT ALL ON TABLE "public"."institutions" TO "authenticated";
 GRANT ALL ON TABLE "public"."institutions" TO "service_role";
-
 
 
 GRANT ALL ON TABLE "public"."invites" TO "anon";
@@ -723,11 +553,9 @@ GRANT ALL ON TABLE "public"."invites" TO "authenticated";
 GRANT ALL ON TABLE "public"."invites" TO "service_role";
 
 
-
 GRANT ALL ON TABLE "public"."keywords" TO "anon";
 GRANT ALL ON TABLE "public"."keywords" TO "authenticated";
 GRANT ALL ON TABLE "public"."keywords" TO "service_role";
-
 
 
 GRANT ALL ON SEQUENCE "public"."keywords_id_seq" TO "anon";
@@ -770,33 +598,15 @@ GRANT ALL ON SEQUENCE "public"."projects_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."projects_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."projects_id_seq" TO "service_role";
 
-
-
-
-
-
-
-
-
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
 
-
-
-
-
-
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "service_role";
-
-
-
-
-
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
@@ -894,83 +704,7 @@ WITH CHECK ( bucket_id = 'project-images' );
 
 
 
-drop extension if exists "pg_net";
 
--- Create the 'project-images' bucket (Force public=true if exists)
-insert into storage.buckets (id, name, public)
-values ('project-images', 'project-images', true)
-on conflict (id) do update set public = true;
-
--- Ensure RLS is enabled or policies won't work
-alter table storage.objects enable row level security;
-
--- Storage policies for project-images bucket
-
--- 1. View (Select) for Authenticated
-DROP POLICY IF EXISTS "Authenticated User Can See Images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can view images" ON storage.objects;
-CREATE POLICY "Authenticated users can view images"
-ON storage.objects FOR SELECT
-TO authenticated
-USING ( bucket_id = 'project-images' );
-
-
-
--- 2. Upload (Insert) for Authenticated
-DROP POLICY IF EXISTS "Authenticated User Can Add Images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload images" ON storage.objects;
-CREATE POLICY "Authenticated users can upload images"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK ( bucket_id = 'project-images' );
-
-
-
-
--- 3. Update for Authenticated
-DROP POLICY IF EXISTS "Authenticated User Can Update Images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can update images" ON storage.objects;
-CREATE POLICY "Authenticated users can update images"
-ON storage.objects FOR UPDATE
-TO authenticated
-USING ( bucket_id = 'project-images' );
-
-
-
-
--- 4. Delete for Authenticated
-DROP POLICY IF EXISTS "Authenticated User Can Delete Images" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can delete images" ON storage.objects;
-CREATE POLICY "Authenticated users can delete images"
-ON storage.objects FOR DELETE
-TO authenticated
-USING ( bucket_id = 'project-images' );
-
-
-
-
--- 5. View (Select) for Public
-DROP POLICY IF EXISTS "Public Can See Images" ON storage.objects;
-DROP POLICY IF EXISTS "Public users can view images" ON storage.objects;
-CREATE POLICY "Public users can view images"
-ON storage.objects FOR SELECT
-TO public
-USING ( bucket_id = 'project-images' );
-
-
-
-
-
-
-
-
--- 6. Upload (Insert) for Public
-DROP POLICY IF EXISTS "Public Can Add Images" ON storage.objects;
-DROP POLICY IF EXISTS "Public users can upload images" ON storage.objects;
-CREATE POLICY "Public users can upload images"
-ON storage.objects FOR INSERT
-TO public
-WITH CHECK ( bucket_id = 'project-images' );
 
 
 

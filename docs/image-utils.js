@@ -1,7 +1,7 @@
 // Image Utilities - Shared image compression and storage operations
 // Used by both upload.js and archive.js
 
-// Supabase client and STORAGE_BUCKETS should be available globally
+// Supabase client and STORAGE_BUCKET should be available globally
 
 // ===== COMPRESSION CONFIGURATION =====
 
@@ -61,10 +61,10 @@ async function compressImages(files, options = IMAGE_COMPRESSION_OPTIONS) {
  * Upload an image to Supabase Storage
  * @param {File} file - The compressed image file to upload
  * @param {string} fileName - The filename to use in storage
- * @param {string} bucketName - The storage bucket name (defaults to STORAGE_BUCKETS.images)
+ * @param {string} bucketName - The storage bucket name (defaults to STORAGE_BUCKET)
  * @returns {Promise<string>} - The public URL of the uploaded image
  */
-async function uploadImageToStorage(file, fileName, bucketName = STORAGE_BUCKETS.images) {
+async function uploadImageToStorage(file, fileName, bucketName = STORAGE_BUCKET) {
     const { data, error } = await supabaseClient.storage
         .from(bucketName)
         .upload(fileName, file, {
@@ -87,10 +87,10 @@ async function uploadImageToStorage(file, fileName, bucketName = STORAGE_BUCKETS
 /**
  * Delete an image from Supabase Storage
  * @param {string} imageUrl - The full URL of the image to delete
- * @param {string} bucketName - The storage bucket name (defaults to STORAGE_BUCKETS.images)
+ * @param {string} bucketName - The storage bucket name (defaults to STORAGE_BUCKET)
  * @returns {Promise<void>}
  */
-async function deleteImageFromStorage(imageUrl, bucketName = STORAGE_BUCKETS.images) {
+async function deleteImageFromStorage(imageUrl, bucketName = STORAGE_BUCKET) {
     try {
         // Extract filename from URL
         const urlParts = imageUrl.split('/');

@@ -199,7 +199,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
             const fileName = `${timestamp}_${i}_${imgData.name}`;
 
             const { data, error } = await supabaseClient.storage
-                .from(STORAGE_BUCKETS.images)
+                .from(STORAGE_BUCKET)
                 .upload(fileName, imgData.file, {
                     cacheControl: '3600',
                     upsert: false
@@ -209,7 +209,7 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
 
             // Get public URL
             const { data: urlData } = supabaseClient.storage
-                .from(STORAGE_BUCKETS.images)
+                .from(STORAGE_BUCKET)
                 .getPublicUrl(fileName);
 
             imageUrls.push(urlData.publicUrl);

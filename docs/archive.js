@@ -706,7 +706,7 @@ window.showProjectDetails = function (projectID) {
                     const filename = urlParts[urlParts.length - 1];
 
                     const { error: storageError } = await supabaseClient.storage
-                        .from('project-images')
+                        .from(STORAGE_BUCKET)
                         .remove([filename]);
 
                     if (storageError) {
@@ -1483,7 +1483,7 @@ async function saveProjectChanges() {
                     const fileName = urlParts[urlParts.length - 1];
 
                     const { error: deleteError } = await supabaseClient.storage
-                        .from(STORAGE_BUCKETS.images)
+                        .from(STORAGE_BUCKET)
                         .remove([fileName]);
 
                     if (deleteError) {
@@ -1504,7 +1504,7 @@ async function saveProjectChanges() {
 
                 try {
                     const { data, error } = await supabaseClient.storage
-                        .from(STORAGE_BUCKETS.images)
+                        .from(STORAGE_BUCKET)
                         .upload(fileName, imgData.file, {
                             cacheControl: '3600',
                             upsert: false
@@ -1517,7 +1517,7 @@ async function saveProjectChanges() {
 
                     // Get public URL
                     const { data: urlData } = supabaseClient.storage
-                        .from(STORAGE_BUCKETS.images)
+                        .from(STORAGE_BUCKET)
                         .getPublicUrl(fileName);
 
                     updatedImageUrls.push(urlData.publicUrl);
