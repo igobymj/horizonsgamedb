@@ -112,11 +112,11 @@ async function deleteImageFromStorage(imageUrl, bucketName = STORAGE_BUCKET) {
 
 /**
  * Update compression status display
- * @param {Array} compressedImages - Array of compressed image objects
  * @param {string} statusElementId - ID of the element to update with status
+ * @param {Array} compressedImages - Array of compressed image objects
  * @returns {void}
  */
-function updateCompressionStatus(compressedImages, statusElementId) {
+function updateCompressionStatus(statusElementId, compressedImages) {
     const statusDiv = document.getElementById(statusElementId);
 
     if (!statusDiv) return;

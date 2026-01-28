@@ -364,17 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTagInput('keywords-input', 'keywords-container', keywords);
     setupTagInput('genres-input', 'genres-container', genres);
     setupTagInput('techUsed-input', 'techUsed-container', techUsed);
-
-
-    // NOTE: Logout is now handled by navbar.js
-    /*
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = 'login.html';
-    });
-    */
-
-
 });
 
 // Load institutions for upload form dropdown

@@ -395,38 +395,11 @@ document.getElementById('generate-form').addEventListener('submit', async (e) =>
     }
 });
 
-// NOTE: Navigation is now handled by navbar.js
-// The following setupLogout function has been disabled
-/*
-function setupLogout() {
-    const header = document.querySelector('header .container');
-    const logoutDiv = document.createElement('div');
-    logoutDiv.className = 'position-absolute top-0 end-0 p-3';
-    logoutDiv.innerHTML = `
-        <a href="index.html" class="text-white text-decoration-none me-3">
-            <i class="fas fa-home me-1"></i>Home
-        </a>
-        <a href="#" id="logout-link" class="text-white text-decoration-none">
-            <i class="fas fa-sign-out-alt me-1"></i>Logout
-        </a>
-    `;
-    header.style.position = 'relative';
-    header.appendChild(logoutDiv);
-
-    document.getElementById('logout-link').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await supabaseClient.auth.signOut();
-        window.location.href = 'login.html';
-    });
-}
-*/
-
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     const isAdmin = await checkAdminAuth();
     if (!isAdmin) return;
 
-    // setupLogout(); // Disabled - navbar.js handles navigation now
     loadStorageUsage(); // Load storage usage stats
     loadInvitationCodes();
     loadUsers(); // Load users for admin management

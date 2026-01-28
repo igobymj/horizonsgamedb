@@ -2004,42 +2004,6 @@ window.copyProjectPermalink = function (projectId) {
 document.addEventListener('DOMContentLoaded', async () => {
     fetchProjects(); // Fetch real data instead of using the array
 
-    // NOTE: Navigation state management is now handled by navbar.js
-    // The following code has been commented out to prevent conflicts
-
-    /* OLD NAVIGATION CODE - Now handled by navbar.js
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        document.getElementById('login-link').style.display = 'none';
-        document.getElementById('upload-link').style.display = 'inline-block';
-        document.getElementById('profile-link').style.display = 'inline-block';
-        document.getElementById('logout-btn').style.display = 'inline-block';
-
-        // Fetch and display user's name and role
-        const { data: person, error: personError } = await supabaseClient
-            .from(TABLES.people)
-            .select('name, user_type')
-            .eq('email', session.user.email)
-            .maybeSingle();
-
-        if (personError) {
-            console.error('Error fetching user name:', personError);
-        }
-
-        if (person) {
-            if (person.name) {
-                document.getElementById('user-name').textContent = person.name;
-                document.getElementById('user-greeting').style.display = 'inline-block';
-            }
-
-            // Show Admin Panel button if user is admin
-            if (person.is_admin === true) {
-                document.getElementById('admin-link').style.display = 'inline-block';
-            }
-        }
-    }
-    */
-
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
@@ -2056,17 +2020,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchCollapse.addEventListener('hide.bs.collapse', () => {
         toggleBtn.innerHTML = '<i class="fas fa-search"></i> Show Search & Filters';
     });
-
-    // NOTE: Logout functionality is now handled by navbar.js
-    /* OLD LOGOUT CODE
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
-        });
-    }
-    */
 
     // Edit mode buttons
     document.getElementById('edit-project-btn').addEventListener('click', () => {
