@@ -1242,27 +1242,6 @@ async function loadPeopleForEdit() {
 
 
 
-// Show custom warning/alert modal (instead of system alert dialog)
-// type can be: 'warning' (yellow), 'success' (green), 'error' (red)
-function showWarning(message, title = 'Warning', type = 'warning') {
-    const modal = new bootstrap.Modal(document.getElementById('warningModal'));
-    const modalHeader = document.querySelector('#warningModal .modal-header');
-
-    // Set header color based on type
-    modalHeader.className = 'modal-header';
-    if (type === 'success') {
-        modalHeader.classList.add('bg-success', 'text-white');
-    } else if (type === 'error') {
-        modalHeader.classList.add('bg-danger', 'text-white');
-    } else {
-        modalHeader.classList.add('bg-warning', 'text-dark');
-    }
-
-    document.getElementById('warning-title').textContent = title;
-    document.getElementById('warning-message').textContent = message;
-    modal.show();
-}
-
 // Storage for image/video edits
 let imagesToDelete = [];
 let newImagesToUpload = [];

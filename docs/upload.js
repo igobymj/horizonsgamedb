@@ -412,41 +412,6 @@ async function loadKeywords() {
     }
 }
 
-// Show keyword confirmation modal
-function showKeywordConfirmModal(keyword) {
-    return new Promise((resolve) => {
-        const modal = new bootstrap.Modal(document.getElementById('keywordConfirmModal'));
-        const keywordText = document.getElementById('new-keyword-text');
-        const confirmBtn = document.getElementById('confirm-keyword-btn');
-
-        keywordText.textContent = `"${keyword}"`;
-
-        // Handle confirm
-        const handleConfirm = () => {
-            modal.hide();
-            cleanup();
-            resolve(true);
-        };
-
-        // Handle cancel/close
-        const handleCancel = () => {
-            cleanup();
-            resolve(false);
-        };
-
-        // Cleanup listeners
-        const cleanup = () => {
-            confirmBtn.removeEventListener('click', handleConfirm);
-            document.getElementById('keywordConfirmModal').removeEventListener('hidden.bs.modal', handleCancel);
-        };
-
-        confirmBtn.addEventListener('click', handleConfirm);
-        document.getElementById('keywordConfirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
-
-        modal.show();
-    });
-}
-
 // Load people for autocomplete (creators and instructors)
 async function loadPeople() {
     try {
