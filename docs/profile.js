@@ -43,6 +43,7 @@ async function loadUserProfile() {
         document.getElementById('email').value = person.email || currentUser.email;
         document.getElementById('name').value = person.name || '';
         document.getElementById('bio').value = person.bio || '';
+        document.getElementById('user-type').value = person.user_type || '';
         document.getElementById('degree').value = person.degree || '';
         document.getElementById('graduation-year').value = person.graduation_year || '';
         document.getElementById('institution').value = person.institution_id || '';
@@ -92,6 +93,7 @@ async function saveProfile(event) {
         const profileData = {
             name: document.getElementById('name').value.trim(),
             bio: document.getElementById('bio').value.trim() || null,
+            user_type: document.getElementById('user-type').value || null,
             degree: document.getElementById('degree').value.trim() || null,
             graduation_year: document.getElementById('graduation-year').value ?
                 parseInt(document.getElementById('graduation-year').value) : null,

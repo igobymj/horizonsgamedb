@@ -10,7 +10,7 @@
         siteName: 'Horizons Student Game Archive',
         siteIcon: 'fas fa-gamepad',
         pages: {
-            home: { title: 'Archive', url: 'index.html', icon: 'fas fa-home', auth: false },
+            home: { title: 'Home', url: 'index.html', icon: 'fas fa-home', auth: false },
             upload: { title: 'Upload', url: 'upload.html', icon: 'fas fa-upload', auth: true },
             profile: { title: 'Profile', url: 'profile.html', icon: 'fas fa-user-edit', auth: true },
             admin: { title: 'Admin', url: 'admin.html', icon: 'fas fa-tools', auth: 'admin' }
@@ -97,6 +97,43 @@
         `;
         branding.appendChild(brandLink);
 
+        // Add dev/prod environment indicator
+        const envBadge = document.createElement('div');
+        envBadge.className = 'ms-3';
+        envBadge.style.cursor = 'pointer';
+        envBadge.title = 'Click to toggle database environment';
+
+        if (typeof IS_DEV !== 'undefined' && IS_DEV) {
+            envBadge.innerHTML = `
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-flask me-1"></i>DEV Database
+                </span>
+            `;
+            envBadge.onclick = () => {
+                if (confirm('Switch to PROD database?\n\nThis will reload the page.')) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('prod', 'true');
+                    url.searchParams.delete('dev');
+                    window.location.href = url.toString();
+                }
+            };
+        } else {
+            envBadge.innerHTML = `
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>PROD Database
+                </span>
+            `;
+            envBadge.onclick = () => {
+                if (confirm('Switch to DEV database?\n\nThis will reload the page.')) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('dev', 'true');
+                    url.searchParams.delete('prod');
+                    window.location.href = url.toString();
+                }
+            };
+        }
+        branding.appendChild(envBadge);
+
         // Right side: Navigation items
         const navItems = document.createElement('nav');
         navItems.className = 'd-flex align-items-center gap-2';
@@ -124,10 +161,10 @@
                 if (session) {
                     isAuthenticated = true;
 
-                    // Fetch user's name and role from people table
+                    // Fetch user's name, role, and admin status from people table
                     const { data: person } = await supabaseClient
                         .from(TABLES.people)
-                        .select('name, user_type')
+                        .select('name, user_type, is_admin')
                         .eq('email', session.user.email)
                         .maybeSingle();
 
@@ -135,8 +172,8 @@
                         // Use display name from profile, fallback to email prefix
                         userName = person.name || session.user.email.split('@')[0];
 
-                        // Check if admin
-                        if (person.user_type === 'admin') {
+                        // Check if admin using is_admin flag
+                        if (person.is_admin === true) {
                             isAdmin = true;
                         }
                     } else {

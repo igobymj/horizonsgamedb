@@ -14,7 +14,7 @@ async function canEditProject(projectId) {
     // Check if user is in people table
     const { data: person, error: personError } = await supabaseClient
         .from(TABLES.people)
-        .select('id, user_type')
+        .select('id, user_type, is_admin')
         .eq('email', session.user.email)
         .maybeSingle();
 
@@ -29,7 +29,7 @@ async function canEditProject(projectId) {
     }
 
     // Admins can edit any project
-    if (person.user_type === 'admin') return true;
+    if (person.is_admin === true) return true;
 
     // Check if user is creator/instructor for this project (any role)
     const { data: relations, error: relationError } = await supabaseClient
@@ -753,6 +753,12 @@ window.showProjectDetails = function (projectID) {
             editBtn.style.display = 'none';
         }
     });
+
+    // Set up copy link button
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+    if (copyLinkBtn) {
+        copyLinkBtn.onclick = () => copyProjectPermalink(projectID);
+    }
 }
 
 // Toggle edit mode for project modal
@@ -1961,6 +1967,39 @@ window.showUserProfile = async function (personName) {
     }
 };
 
+
+// ===== PERMALINK FUNCTIONS =====
+
+// Check URL for project permalink on page load
+function checkProjectPermalink() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+
+    if (projectId) {
+        // Wait a bit for projects to load
+        setTimeout(() => {
+            showProjectDetails(parseInt(projectId));
+        }, 500);
+    }
+}
+
+// Get permalink URL for a project
+function getProjectPermalink(projectId) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?project=${projectId}`;
+}
+
+// Copy permalink to clipboard
+window.copyProjectPermalink = function (projectId) {
+    const url = getProjectPermalink(projectId);
+    navigator.clipboard.writeText(url).then(() => {
+        showWarning('Link copied to clipboard!', 'Success', 'success');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showWarning('Failed to copy link', 'Error', 'error');
+    });
+};
+
 // 6. Start the App
 document.addEventListener('DOMContentLoaded', async () => {
     fetchProjects(); // Fetch real data instead of using the array
@@ -1994,7 +2033,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Show Admin Panel button if user is admin
-            if (person.user_type === 'admin') {
+            if (person.is_admin === true) {
                 document.getElementById('admin-link').style.display = 'inline-block';
             }
         }
@@ -2004,6 +2043,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadInstitutions(); // Load institutions for filter
     loadGenres(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
+
+    // Check for project permalink
+    checkProjectPermalink();
 
     // Update search toggle button text
     const searchCollapse = document.getElementById('searchCollapse');

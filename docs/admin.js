@@ -14,11 +14,11 @@ async function checkAdminAuth() {
     // Check if user is admin by querying people table
     const { data: personData, error } = await supabaseClient
         .from(TABLES.people)
-        .select('user_type')
+        .select('is_admin')
         .eq('email', session.user.email)
         .single();
 
-    if (error || !personData || personData.user_type !== 'admin') {
+    if (error || !personData || personData.is_admin !== true) {
         // Not an admin, redirect to index with error
         showWarning('Access denied. Admin privileges required.', 'Access Denied', 'error');
         window.location.href = 'index.html';
@@ -252,7 +252,9 @@ document.getElementById('generate-form').addEventListener('submit', async (e) =>
     }
 });
 
-// Add logout functionality
+// NOTE: Navigation is now handled by navbar.js
+// The following setupLogout function has been disabled
+/*
 function setupLogout() {
     const header = document.querySelector('header .container');
     const logoutDiv = document.createElement('div');
@@ -274,20 +276,143 @@ function setupLogout() {
         window.location.href = 'login.html';
     });
 }
+*/
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     const isAdmin = await checkAdminAuth();
     if (!isAdmin) return;
 
-    setupLogout();
+    // setupLogout(); // Disabled - navbar.js handles navigation now
     loadInvitationCodes();
+    loadUsers(); // Load users for admin management
     loadGenres(); // Load genres on startup
     loadKeywords(); // Load keywords on startup
     loadProfanityList(); // Load bad words list
 });
 
+// ===== USER ADMIN MANAGEMENT =====
+
+let allUsers = []; // Store all users for filtering
+
+// Load all users for admin management
+async function loadUsers() {
+    try {
+        const { data: users, error } = await supabaseClient
+            .from(TABLES.people)
+            .select('id, name, email, user_type, is_admin')
+            .order('name');
+
+        if (error) throw error;
+
+        allUsers = users || [];
+        renderUsers(allUsers);
+
+    } catch (error) {
+        console.error('Error loading users:', error);
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error loading users: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Render users table
+function renderUsers(users) {
+    const tbody = document.getElementById('users-table-body');
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-users-slash me-2"></i>No users found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+        const isAdmin = user.is_admin === true;
+        const statusBadge = isAdmin
+            ? '<span class="badge bg-danger">Admin</span>'
+            : '<span class="badge bg-secondary">Regular User</span>';
+
+        const roleDisplay = user.user_type
+            ? user.user_type.charAt(0).toUpperCase() + user.user_type.slice(1)
+            : '<span class="text-muted">Not set</span>';
+
+        return `
+                <tr>
+                    <td>${user.name || '<span class="text-muted">No name</span>'}</td>
+                    <td>${user.email}</td>
+                    <td>${roleDisplay}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        ${isAdmin
+                ? `<button class="btn btn-sm btn-warning" onclick="toggleUserAdmin(${user.id}, false, '${user.name || user.email}')">
+                                <i class="fas fa-user-minus me-1"></i>Remove Admin
+                               </button>`
+                : `<button class="btn btn-sm btn-success" onclick="toggleUserAdmin(${user.id}, true, '${user.name || user.email}')">
+                                <i class="fas fa-user-shield me-1"></i>Make Admin
+                               </button>`
+            }
+                    </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Search/filter users
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(user =>
+                (user.name && user.name.toLowerCase().includes(query)) ||
+                (user.email && user.email.toLowerCase().includes(query))
+            );
+            renderUsers(filtered);
+        });
+    }
+});
+
+// Toggle user admin status
+async function toggleUserAdmin(userId, makeAdmin, userName) {
+    const action = makeAdmin ? 'grant' : 'remove';
+    const actionText = makeAdmin ? 'Make Admin' : 'Remove Admin';
+
+    const confirmed = await showConfirm(
+        `Are you sure you want to ${action} admin privileges ${makeAdmin ? 'to' : 'from'} ${userName}?`,
+        actionText
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from(TABLES.people)
+            .update({ is_admin: makeAdmin })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        showSuccess(`Admin privileges ${makeAdmin ? 'granted to' : 'removed from'} ${userName}`);
+        loadUsers(); // Reload table
+
+    } catch (error) {
+        console.error('Error toggling admin status:', error);
+        showError('Failed to update admin status: ' + error.message);
+    }
+}
+
 // ... (existing code) ...
+
 
 // ===== KEYWORD MANAGEMENT =====
 
