@@ -1,6 +1,3 @@
-
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 // Get redirect URL from query params or referrer, default to index.html
 function getRedirectUrl() {
     const urlParams = new URLSearchParams(window.location.search);

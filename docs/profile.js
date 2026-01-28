@@ -1,6 +1,3 @@
-// Initialize Supabase client
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 let currentUser = null;
 let currentPersonId = null;
 

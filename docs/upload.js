@@ -1,6 +1,3 @@
-
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 // perform supabase built in authentication check
 async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();

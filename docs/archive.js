@@ -1,6 +1,3 @@
-
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 // Global variable to store games so search works instantly
 let allProjects = [];
 let currentProject = null; // Store current project for editing

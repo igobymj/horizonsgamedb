@@ -1,6 +1,3 @@
-
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 // Check if user came from valid reset link
 async function checkResetToken() {
     const { data: { session } } = await supabaseClient.auth.getSession();

@@ -71,3 +71,10 @@ const TABLES = {
 
 // Storage bucket (same name in both environments)
 const STORAGE_BUCKET = 'project-images';
+
+// ============================================================
+// SUPABASE CLIENT
+// ============================================================
+
+// Single shared client instance for all pages
+const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);

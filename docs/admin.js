@@ -1,6 +1,3 @@
-
-const supabaseClient = supabase.createClient(PROJECT_URL, ANON_KEY);
-
 // Check authentication and admin status
 async function checkAdminAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
