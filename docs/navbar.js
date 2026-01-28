@@ -90,49 +90,63 @@
         const branding = document.createElement('div');
         const brandLink = document.createElement('a');
         brandLink.href = 'index.html';
-        brandLink.className = 'text-white text-decoration-none d-flex align-items-center';
+        brandLink.className = 'text-white text-decoration-none';
         brandLink.innerHTML = `
-            <i class="${NAV_CONFIG.siteIcon} me-2"></i>
-            <h1 class="h4 mb-0">${NAV_CONFIG.siteName}</h1>
+            <div class="d-flex align-items-center">
+                <i class="${NAV_CONFIG.siteIcon} me-2"></i>
+                <div>
+                    <h1 class="h4 mb-0">${NAV_CONFIG.siteName}</h1>
+                    <small class="text-white-50 d-none d-md-block">A curated collection of student-made video games and interactive projects.</small>
+                </div>
+            </div>
         `;
         branding.appendChild(brandLink);
 
-        // Add dev/prod environment indicator
-        const envBadge = document.createElement('div');
-        envBadge.className = 'ms-3';
-        envBadge.style.cursor = 'pointer';
-        envBadge.title = 'Click to toggle database environment';
+        // Add dev/prod environment indicator (only in dev mode or when explicitly toggled)
+        const showEnvBadge = typeof IS_DEV !== 'undefined' && (
+            IS_DEV ||
+            typeof FORCE_DEV !== 'undefined' && FORCE_DEV ||
+            typeof FORCE_PROD !== 'undefined' && FORCE_PROD
+        );
 
-        if (typeof IS_DEV !== 'undefined' && IS_DEV) {
-            envBadge.innerHTML = `
-                <span class="badge bg-warning text-dark">
-                    <i class="fas fa-flask me-1"></i>DEV Database
-                </span>
-            `;
-            envBadge.onclick = () => {
-                if (confirm('Switch to PROD database?\n\nThis will reload the page.')) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('prod', 'true');
-                    url.searchParams.delete('dev');
-                    window.location.href = url.toString();
-                }
-            };
-        } else {
-            envBadge.innerHTML = `
-                <span class="badge bg-success">
-                    <i class="fas fa-check-circle me-1"></i>PROD Database
-                </span>
-            `;
-            envBadge.onclick = () => {
-                if (confirm('Switch to DEV database?\n\nThis will reload the page.')) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('dev', 'true');
-                    url.searchParams.delete('prod');
-                    window.location.href = url.toString();
-                }
-            };
+        if (showEnvBadge) {
+            const envBadge = document.createElement('div');
+            envBadge.className = 'ms-3';
+            envBadge.style.cursor = 'pointer';
+            envBadge.title = 'Click to toggle database environment';
+
+            if (IS_DEV) {
+                envBadge.innerHTML = `
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-flask me-1"></i>DEV Database
+                    </span>
+                `;
+                envBadge.onclick = () => {
+                    if (confirm('Switch to PROD database?\n\nThis will reload the page.')) {
+                        const url = new URL(window.location);
+                        url.searchParams.set('prod', 'true');
+                        url.searchParams.delete('dev');
+                        window.location.href = url.toString();
+                    }
+                };
+            } else {
+                envBadge.innerHTML = `
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>PROD Database
+                    </span>
+                `;
+                envBadge.onclick = () => {
+                    if (confirm('Switch to DEV database?\n\nThis will reload the page.')) {
+                        const url = new URL(window.location);
+                        url.searchParams.set('dev', 'true');
+                        url.searchParams.delete('prod');
+                        window.location.href = url.toString();
+                    }
+                };
+            }
+            branding.appendChild(envBadge);
         }
-        branding.appendChild(envBadge);
+
 
         // Right side: Navigation items
         const navItems = document.createElement('nav');

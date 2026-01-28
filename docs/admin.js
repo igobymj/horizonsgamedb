@@ -28,6 +28,149 @@ async function checkAdminAuth() {
     return true;
 }
 
+// ===== STORAGE USAGE MONITORING =====
+
+const STORAGE_LIMIT_GB = 1; // Supabase free tier limit
+const STORAGE_LIMIT_BYTES = STORAGE_LIMIT_GB * 1024 * 1024 * 1024;
+
+// Format bytes to human-readable size
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Calculate and display storage usage
+async function loadStorageUsage() {
+    try {
+        // List all files in the bucket
+        const { data: files, error } = await supabaseClient
+            .storage
+            .from(STORAGE_BUCKET)
+            .list('', {
+                limit: 10000, // Get all files
+                offset: 0,
+                sortBy: { column: 'name', order: 'asc' }
+            });
+
+        if (error) {
+            console.error('Error fetching storage:', error);
+            showStorageError();
+            return;
+        }
+
+        // Calculate total size
+        let totalBytes = 0;
+        let fileCount = 0;
+
+        // Recursive function to count files and sizes
+        async function countFilesInPath(path = '') {
+            const { data: items, error } = await supabaseClient
+                .storage
+                .from(STORAGE_BUCKET)
+                .list(path, {
+                    limit: 1000,
+                    offset: 0
+                });
+
+            if (error) return;
+
+            for (const item of items || []) {
+                if (item.id) { // It's a file
+                    totalBytes += item.metadata?.size || 0;
+                    fileCount++;
+                } else if (item.name) { // It's a folder
+                    await countFilesInPath(path ? `${path}/${item.name}` : item.name);
+                }
+            }
+        }
+
+        await countFilesInPath();
+
+        // Calculate percentages
+        const usedPercent = (totalBytes / STORAGE_LIMIT_BYTES) * 100;
+        const remainingBytes = STORAGE_LIMIT_BYTES - totalBytes;
+
+        // Update UI
+        updateStorageUI(totalBytes, remainingBytes, usedPercent, fileCount);
+
+    } catch (error) {
+        console.error('Error calculating storage:', error);
+        showStorageError();
+    }
+}
+
+// Update storage UI elements
+function updateStorageUI(usedBytes, remainingBytes, percentUsed, fileCount) {
+    // Update progress bar
+    const progressBar = document.getElementById('storage-progress-bar');
+    const percentage = Math.min(percentUsed, 100).toFixed(1);
+
+    progressBar.style.width = percentage + '%';
+    progressBar.setAttribute('aria-valuenow', percentage);
+
+    // Color code based on usage
+    progressBar.className = 'progress-bar';
+    if (percentUsed < 50) {
+        progressBar.classList.add('bg-success');
+    } else if (percentUsed < 80) {
+        progressBar.classList.add('bg-warning');
+    } else {
+        progressBar.classList.add('bg-danger');
+        progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+    }
+
+    // Update text elements
+    document.getElementById('storage-percentage').textContent = percentage + '%';
+    document.getElementById('storage-used-text').textContent = formatBytes(usedBytes);
+    document.getElementById('storage-used').textContent = formatBytes(usedBytes);
+    document.getElementById('storage-remaining').textContent = formatBytes(remainingBytes);
+    document.getElementById('storage-file-count').textContent = fileCount.toLocaleString();
+
+    // Show warning if approaching limit
+    if (percentUsed > 80 && percentUsed < 100) {
+        showWarning(
+            `Storage is ${percentage}% full. Consider cleaning up old files or upgrading.`,
+            'Storage Warning',
+            'warning'
+        );
+    } else if (percentUsed >= 100) {
+        showWarning(
+            'Storage limit reached! New uploads will fail until space is freed.',
+            'Storage Full',
+            'error'
+        );
+    }
+}
+
+// Show error state in storage UI
+function showStorageError() {
+    document.getElementById('storage-percentage').textContent = 'Error';
+    document.getElementById('storage-used-text').textContent = 'Error loading';
+    document.getElementById('storage-used').textContent = 'N/A';
+    document.getElementById('storage-remaining').textContent = 'N/A';
+    document.getElementById('storage-file-count').textContent = 'N/A';
+}
+
+// Refresh storage usage (called by button)
+window.refreshStorageUsage = function () {
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('i');
+
+    // Animate refresh icon
+    icon.classList.add('fa-spin');
+    btn.disabled = true;
+
+    loadStorageUsage().finally(() => {
+        setTimeout(() => {
+            icon.classList.remove('fa-spin');
+            btn.disabled = false;
+        }, 500);
+    });
+};
+
 // Generate Steam-format invitation code
 // Format: TEST-XXXX-XXXX
 // For testing: First 4 characters are "TEST"
@@ -284,6 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isAdmin) return;
 
     // setupLogout(); // Disabled - navbar.js handles navigation now
+    loadStorageUsage(); // Load storage usage stats
     loadInvitationCodes();
     loadUsers(); // Load users for admin management
     loadGenres(); // Load genres on startup

@@ -146,9 +146,16 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         }
 
         // Step 3: Create user in Supabase Auth
+        // TEMPORARY: Email verification disabled for early access
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: email,
-            password: password
+            password: password,
+            options: {
+                emailRedirectTo: window.location.origin + '/index.html',
+                data: {
+                    email_confirm: true // Auto-confirm email for early access
+                }
+            }
         });
 
         if (authError) throw authError;
@@ -195,10 +202,27 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 
         if (updateError) throw updateError;
 
-        showMessage('Account created successfully! You can now log in.', false);
+        // EARLY ACCESS: Auto-login the user immediately
+        showMessage('Account created successfully! Logging you in...', false);
 
-        // Switch to login tab and clear form
-        document.getElementById('login-tab').click();
+        // Sign in the user automatically
+        const { error: loginError } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (loginError) {
+            // Fallback: Ask them to login manually
+            showMessage('Account created! Please log in with your new credentials.', false);
+            document.getElementById('login-tab').click();
+        } else {
+            // Success: Redirect to app
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        // Clear form
         document.getElementById('signup-form').reset();
 
     } catch (error) {

@@ -9,15 +9,29 @@ const urlParams = new URLSearchParams(window.location.search);
 const FORCE_PROD = urlParams.get('prod') === 'true';
 const FORCE_DEV = urlParams.get('dev') === 'true';
 
+// Known production domains
+const PROD_DOMAINS = [
+    'beta01.horizons-db.pages.dev',
+    'horizons-db.pages.dev',
+    // Add more production domains here as needed
+];
+
 // Automatically detect development environment
 const IS_DEV = FORCE_DEV || (
+    !FORCE_PROD && // Not forcing production
+    !PROD_DOMAINS.includes(window.location.hostname) && // Not a known production domain
     (
         window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname.includes('127.0.0.1') ||
         window.location.protocol === 'file:'  // Local file system
-    ) && !FORCE_PROD  // Override if ?prod=true
+    )
 );
+
+// Log current environment (helpful for debugging)
+console.log(`[Config] Environment: ${IS_DEV ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+console.log(`[Config] Hostname: ${window.location.hostname}`);
+console.log(`[Config] Database: ${IS_DEV ? 'DEV' : 'PROD'}`);
 
 // ============================================================
 // SUPABASE CONFIGURATION
