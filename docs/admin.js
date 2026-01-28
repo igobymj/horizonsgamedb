@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadStorageUsage(); // Load storage usage stats
     loadInvitationCodes();
     loadUsers(); // Load users for admin management
-    loadGenres(); // Load genres on startup
+    loadGenresAdmin(); // Load genres on startup
     loadKeywords(); // Load keywords on startup
     loadProfanityList(); // Load bad words list
 });
@@ -807,7 +807,7 @@ async function deleteKeyword(id, name) {
 // ===== GENRE MANAGEMENT =====
 
 // Load genres into table
-async function loadGenres() {
+async function loadGenresAdmin() {
     const tableBody = document.getElementById('genres-table-body');
     const countBadge = document.getElementById('genre-count');
 
@@ -888,7 +888,7 @@ document.getElementById('add-genre-form').addEventListener('submit', async (e) =
 
         showSuccess(`Genre "${genreName}" added successfully`);
         input.value = '';
-        loadGenres(); // Reload list
+        loadGenresAdmin(); // Reload list
 
     } catch (error) {
         console.error('Add genre error:', error);
@@ -918,7 +918,7 @@ async function deleteGenre(id, name) {
         if (error) throw error;
 
         showSuccess(`Genre "${name}" deleted successfully`);
-        loadGenres(); // Reload list
+        loadGenresAdmin(); // Reload list
 
     } catch (error) {
         console.error('Delete genre error:', error);

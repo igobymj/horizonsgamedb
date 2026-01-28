@@ -1711,7 +1711,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Load genres for filter dropdown
-async function loadGenres() {
+async function loadGenresFilter() {
     try {
         const { data: genres, error } = await supabaseClient
             .from(TABLES.genres)
@@ -2002,7 +2002,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchProjects(); // Fetch real data instead of using the array
 
     loadInstitutions(); // Load institutions for filter
-    loadGenres(); // Load genres for filter
+    loadGenresFilter(); // Load genres for filter
     loadKeywordsFilter(); // Load keywords for filter
 
     // Check for project permalink

@@ -47,7 +47,7 @@ Each page follows the same pattern:
 
 ### Key Files
 
-- **config.js**: Environment detection, Supabase credentials, table names, storage bucket config
+- **config.js**: Environment detection, Supabase credentials, table names, storage bucket config, shared `supabaseClient` instance
 - **navbar.js**: IIFE that generates consistent navigation across all pages, handles auth state display
 - **archive.js**: Main page logic - fetches projects, renders cards, handles search/filter, project modal with view/edit modes
 - **upload.js**: Project upload form with tag inputs, image compression, multi-step submission
@@ -56,7 +56,7 @@ Each page follows the same pattern:
 
 ### Shared Utility Modules
 
-- **tag-utils.js**: Keyword/genre validation and database operations (isNewKeyword, isValidGenre, insertKeywordIfNew)
+- **tag-utils.js**: Keyword/genre validation and database operations (isNewKeyword, isValidGenre, insertKeywordIfNew, loadGenres)
 - **image-utils.js**: Image compression config, compressImage/compressImages, storage upload/delete helpers
 - **validation-utils.js**: Form validation utilities
 - **modal-utils.js**: Reusable modal functions (showWarning, showConfirmModal)
@@ -109,4 +109,11 @@ if (error) throw error;
 Tag inputs (creators, keywords, genres) use Enter key to add, store in arrays, validate against database before adding.
 
 ### Global Variables
-Each page creates its own `supabaseClient`. Global arrays store runtime state (e.g., `allProjects`, `creators`, `compressedImages`).
+`supabaseClient` is initialized once in config.js and shared across all pages. Global arrays store runtime state (e.g., `allProjects`, `creators`, `compressedImages`).
+
+### Function Naming Convention
+Page-specific versions of shared functions use suffixes to avoid collisions:
+- `loadGenres(datalistId)` - generic utility in tag-utils.js
+- `loadGenresFilter()` - archive.js filter dropdown
+- `loadGenresAdmin()` - admin.js table management
+- `loadKeywordsFilter()` - archive.js filter dropdown
