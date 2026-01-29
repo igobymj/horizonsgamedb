@@ -1,3 +1,19 @@
+// Helper function to preserve environment parameters when building URLs
+function addEnvParams(url) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prod = urlParams.get('prod');
+    const dev = urlParams.get('dev');
+
+    const separator = url.includes('?') ? '&' : '?';
+
+    if (prod === 'true') {
+        return `${url}${separator}prod=true`;
+    } else if (dev === 'true') {
+        return `${url}${separator}dev=true`;
+    }
+    return url;
+}
+
 let currentUser = null;
 let currentPersonId = null;
 
@@ -6,8 +22,8 @@ async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session) {
-        // Redirect to login if not authenticated
-        window.location.href = 'login.html';
+        // Redirect to login if not authenticated, preserving environment params
+        window.location.href = addEnvParams('login.html');
         return false;
     }
 

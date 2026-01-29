@@ -1,10 +1,27 @@
+// Helper function to preserve environment parameters when building URLs
+function addEnvParams(url) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prod = urlParams.get('prod');
+    const dev = urlParams.get('dev');
+
+    // Check if URL already has query params
+    const separator = url.includes('?') ? '&' : '?';
+
+    if (prod === 'true') {
+        return `${url}${separator}prod=true`;
+    } else if (dev === 'true') {
+        return `${url}${separator}dev=true`;
+    }
+    return url;
+}
+
 // Get redirect URL from query params or referrer, default to index.html
 function getRedirectUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const redirect = urlParams.get('redirect');
 
     if (redirect) {
-        return redirect;
+        return addEnvParams(redirect);
     }
 
     // Check document.referrer, but exclude reset-password.html
@@ -14,8 +31,8 @@ function getRedirectUrl() {
         return document.referrer;
     }
 
-    // Default to index
-    return 'index.html';
+    // Default to index with environment params preserved
+    return addEnvParams('index.html');
 }
 
 const redirectUrl = getRedirectUrl();
@@ -24,8 +41,8 @@ const redirectUrl = getRedirectUrl();
 async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
-        // Already logged in, redirect to home page
-        window.location.href = 'index.html';
+        // Already logged in, redirect to home page with environment params preserved
+        window.location.href = addEnvParams('index.html');
     }
 }
 
@@ -143,16 +160,9 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         }
 
         // Step 3: Create user in Supabase Auth
-        // TEMPORARY: Email verification disabled for early access
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: email,
-            password: password,
-            options: {
-                emailRedirectTo: window.location.origin + '/index.html',
-                data: {
-                    email_confirm: true // Auto-confirm email for early access
-                }
-            }
+            password: password
         });
 
         if (authError) throw authError;
@@ -199,27 +209,10 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 
         if (updateError) throw updateError;
 
-        // EARLY ACCESS: Auto-login the user immediately
-        showMessage('Account created successfully! Logging you in...', false);
+        showMessage('Account created successfully! You can now log in.', false);
 
-        // Sign in the user automatically
-        const { error: loginError } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (loginError) {
-            // Fallback: Ask them to login manually
-            showMessage('Account created! Please log in with your new credentials.', false);
-            document.getElementById('login-tab').click();
-        } else {
-            // Success: Redirect to app
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        }
-
-        // Clear form
+        // Switch to login tab and clear form
+        document.getElementById('login-tab').click();
         document.getElementById('signup-form').reset();
 
     } catch (error) {

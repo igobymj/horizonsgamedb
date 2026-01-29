@@ -33,6 +33,9 @@
             console.warn('Supabase client not loaded. Navbar will show guest mode.');
         }
 
+        // Ensure confirm modal exists in DOM for database switching
+        ensureConfirmModalExists();
+
         // Get current page
         const currentPage = getCurrentPage();
 
@@ -66,6 +69,85 @@
         await updateNavbarAuthState();
     }
 
+    // Ensure confirm modal exists for database switching
+    function ensureConfirmModalExists() {
+        if (document.getElementById('confirmModal')) {
+            return; // Modal already exists
+        }
+
+        const modalHTML = `
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white" id="confirm-modal-header">
+                            <h5 class="modal-title" id="confirm-modal-title">Confirm Action</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="confirm-modal-message" class="mb-0"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirm-modal-btn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    // Inline showConfirmModal if modal-utils.js isn't loaded
+    if (typeof showConfirmModal === 'undefined') {
+        window.showConfirmModal = function (message, title = 'Confirm Action', isDestructive = false) {
+            return new Promise((resolve) => {
+                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                const modalHeader = document.getElementById('confirm-modal-header');
+                const modalTitle = document.getElementById('confirm-modal-title');
+                const modalMessage = document.getElementById('confirm-modal-message');
+                const confirmBtn = document.getElementById('confirm-modal-btn');
+
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+
+                // Style based on type
+                modalHeader.className = 'modal-header text-white';
+                if (isDestructive) {
+                    modalHeader.classList.add('bg-danger');
+                    confirmBtn.className = 'btn btn-danger';
+                } else {
+                    modalHeader.classList.add('bg-primary');
+                    confirmBtn.className = 'btn btn-primary';
+                }
+
+                // Handle confirm
+                const handleConfirm = () => {
+                    modal.hide();
+                    cleanup();
+                    resolve(true);
+                };
+
+                // Handle cancel/close
+                const handleCancel = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                // Cleanup listeners
+                const cleanup = () => {
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    document.getElementById('confirmModal').removeEventListener('hidden.bs.modal', handleCancel);
+                };
+
+                confirmBtn.addEventListener('click', handleConfirm);
+                document.getElementById('confirmModal').addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+                modal.show();
+            });
+        };
+    }
+
     function getCurrentPage() {
         const path = window.location.pathname;
         const filename = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
@@ -82,71 +164,158 @@
         return pageMap[filename] || 'home';
     }
 
+    // Helper function to preserve environment parameters when navigating
+    function addEnvParams(url) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const prod = urlParams.get('prod');
+        const dev = urlParams.get('dev');
+
+        if (prod === 'true') {
+            return `${url}?prod=true`;
+        } else if (dev === 'true') {
+            return `${url}?dev=true`;
+        }
+        return url;
+    }
+
     function createNavbarElement(currentPage) {
         const container = document.createElement('div');
         container.className = 'container d-flex justify-content-between align-items-center';
 
         // Left side: Site branding
         const branding = document.createElement('div');
+        branding.className = 'd-flex align-items-center';
+
         const brandLink = document.createElement('a');
-        brandLink.href = 'index.html';
-        brandLink.className = 'text-white text-decoration-none';
+        brandLink.href = addEnvParams('index.html');
+        brandLink.className = 'text-white text-decoration-none d-flex align-items-center';
         brandLink.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="${NAV_CONFIG.siteIcon} me-2"></i>
-                <div>
-                    <h1 class="h4 mb-0">${NAV_CONFIG.siteName}</h1>
-                    <small class="text-white-50 d-none d-md-block">A curated collection of student-made video games and interactive projects.</small>
-                </div>
-            </div>
+            <i class="${NAV_CONFIG.siteIcon} me-2"></i>
+            <h1 class="h4 mb-0">${NAV_CONFIG.siteName}</h1>
         `;
         branding.appendChild(brandLink);
 
-        // Add dev/prod environment indicator (only in dev mode or when explicitly toggled)
-        const showEnvBadge = typeof IS_DEV !== 'undefined' && (
-            IS_DEV ||
-            typeof FORCE_DEV !== 'undefined' && FORCE_DEV ||
-            typeof FORCE_PROD !== 'undefined' && FORCE_PROD
-        );
+        // Add dev/prod environment indicator as a separate button
+        const envBadge = document.createElement('button');
+        envBadge.type = 'button';  // Explicitly set as button to prevent form submission
+        envBadge.className = 'btn btn-sm ms-3 p-0 border-0';
+        envBadge.style.cursor = 'pointer';
+        envBadge.style.background = 'none';
+        envBadge.title = 'Click to toggle database environment';
 
-        if (showEnvBadge) {
-            const envBadge = document.createElement('div');
-            envBadge.className = 'ms-3';
-            envBadge.style.cursor = 'pointer';
-            envBadge.title = 'Click to toggle database environment';
+        if (typeof IS_DEV !== 'undefined' && IS_DEV) {
+            envBadge.innerHTML = `
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-flask me-1"></i>DEV Database
+                </span>
+            `;
+            envBadge.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
 
-            if (IS_DEV) {
-                envBadge.innerHTML = `
-                    <span class="badge bg-warning text-dark">
-                        <i class="fas fa-flask me-1"></i>DEV Database
-                    </span>
-                `;
-                envBadge.onclick = () => {
-                    if (confirm('Switch to PROD database?\n\nThis will reload the page.')) {
-                        const url = new URL(window.location);
-                        url.searchParams.set('prod', 'true');
-                        url.searchParams.delete('dev');
-                        window.location.href = url.toString();
+                console.log('[DB Switch] DEV->PROD switch clicked');
+
+                // Use custom modal instead of native confirm
+                const confirmed = await showConfirmModal(
+                    'You will be logged out and need to sign in again.\n\nThis will reload the page.',
+                    'Switch to PROD Database?',
+                    false  // Not destructive, just informational
+                );
+
+                console.log('[DB Switch] User confirmed:', confirmed);
+
+                if (!confirmed) {
+                    console.log('[DB Switch] User cancelled');
+                    return;
+                }
+
+                // Perform cleanup before navigation
+                try {
+                    // Sign out from current database
+                    if (typeof supabaseClient !== 'undefined') {
+                        console.log('[DB Switch] Signing out from DEV database...');
+                        await supabaseClient.auth.signOut();
                     }
-                };
-            } else {
-                envBadge.innerHTML = `
-                    <span class="badge bg-success">
-                        <i class="fas fa-check-circle me-1"></i>PROD Database
-                    </span>
-                `;
-                envBadge.onclick = () => {
-                    if (confirm('Switch to DEV database?\n\nThis will reload the page.')) {
-                        const url = new URL(window.location);
-                        url.searchParams.set('dev', 'true');
-                        url.searchParams.delete('prod');
-                        window.location.href = url.toString();
+
+                    console.log('[DB Switch] Clearing storage...');
+                    // Clear all local storage to prevent auth conflicts
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    console.log('[DB Switch] Switching to PROD...');
+                    // Small delay to ensure cleanup completes
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    // Now switch to PROD
+                    const url = new URL(window.location);
+                    url.searchParams.set('prod', 'true');
+                    url.searchParams.delete('dev');
+                    console.log('[DB Switch] Navigating to:', url.toString());
+                    window.location.href = url.toString();
+                } catch (error) {
+                    console.error('[DB Switch] Error during switch:', error);
+                    alert('Error switching databases. Please try again.');
+                }
+            });
+        } else {
+            envBadge.innerHTML = `
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>PROD Database
+                </span>
+            `;
+            envBadge.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                console.log('[DB Switch] PROD->DEV switch clicked');
+
+                // Use custom modal instead of native confirm
+                const confirmed = await showConfirmModal(
+                    'You will be logged out and need to sign in again.\n\nThis will reload the page.',
+                    'Switch to DEV Database?',
+                    false  // Not destructive, just informational
+                );
+
+                console.log('[DB Switch] User confirmed:', confirmed);
+
+                if (!confirmed) {
+                    console.log('[DB Switch] User cancelled');
+                    return;
+                }
+
+                // Perform cleanup before navigation
+                try {
+                    // Sign out from current database
+                    if (typeof supabaseClient !== 'undefined') {
+                        console.log('[DB Switch] Signing out from PROD database...');
+                        await supabaseClient.auth.signOut();
                     }
-                };
-            }
-            branding.appendChild(envBadge);
+
+                    console.log('[DB Switch] Clearing storage...');
+                    // Clear all local storage to prevent auth conflicts
+                    localStorage.clear();
+                    sessionStorage.clear();
+
+                    console.log('[DB Switch] Switching to DEV...');
+                    // Small delay to ensure cleanup completes
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    // Now switch to DEV
+                    const url = new URL(window.location);
+                    url.searchParams.set('dev', 'true');
+                    url.searchParams.delete('prod');
+                    console.log('[DB Switch] Navigating to:', url.toString());
+                    window.location.href = url.toString();
+                } catch (error) {
+                    console.error('[DB Switch] Error during switch:', error);
+                    alert('Error switching databases. Please try again.');
+                }
+            });
         }
 
+        branding.appendChild(envBadge);
 
         // Right side: Navigation items
         const navItems = document.createElement('nav');
@@ -211,7 +380,7 @@
             if (page.auth === 'admin' && !isAdmin) return;
 
             const link = document.createElement('a');
-            link.href = page.url;
+            link.href = addEnvParams(page.url);  // Preserve environment params
             link.className = `btn btn-sm ${currentPage === key ? 'btn-light' : 'btn-outline-light'}`;
             link.innerHTML = `<i class="${page.icon} me-1"></i> ${page.title}`;
             navItems.appendChild(link);
@@ -235,13 +404,14 @@
                 if (typeof supabaseClient !== 'undefined') {
                     await supabaseClient.auth.signOut();
                 }
-                window.location.href = 'login.html';
+                // Preserve environment params when redirecting to login
+                window.location.href = addEnvParams('login.html');
             };
             navItems.appendChild(logoutBtn);
         } else if (currentPage !== 'login') {
             // Only show login button if not already on login page
             const loginBtn = document.createElement('a');
-            loginBtn.href = 'login.html';
+            loginBtn.href = addEnvParams('login.html');  // Preserve environment params
             loginBtn.className = 'btn btn-sm btn-outline-light';
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-1"></i> Login';
             navItems.appendChild(loginBtn);

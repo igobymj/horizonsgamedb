@@ -1,3 +1,20 @@
+// Helper function to preserve environment parameters when building URLs
+function addEnvParams(url) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prod = urlParams.get('prod');
+    const dev = urlParams.get('dev');
+
+    // Check if URL already has query params
+    const separator = url.includes('?') ? '&' : '?';
+
+    if (prod === 'true') {
+        return `${url}${separator}prod=true`;
+    } else if (dev === 'true') {
+        return `${url}${separator}dev=true`;
+    }
+    return url;
+}
+
 // Check if user came from valid reset link
 async function checkResetToken() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -6,7 +23,7 @@ async function checkResetToken() {
         // No valid session from reset link
         showMessage('Invalid or expired reset link. Please request a new one.', true);
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = addEnvParams('login.html');
         }, 3000);
     }
 }
@@ -53,7 +70,7 @@ document.getElementById('reset-password-form').addEventListener('submit', async 
         // Sign out and redirect to login
         await supabaseClient.auth.signOut();
         setTimeout(() => {
-            window.location.href = 'login.html?reset=success';
+            window.location.href = addEnvParams('login.html?reset=success');
         }, 2000);
 
     } catch (error) {
