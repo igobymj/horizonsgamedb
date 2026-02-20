@@ -521,7 +521,11 @@ async function toggleUserAdmin(userId, makeAdmin, userName) {
 
     } catch (error) {
         console.error('Error toggling admin status:', error);
-        showError('Failed to update admin status: ' + error.message);
+        if (error.code === '23514' && error.message?.includes('check_institution')) {
+            showError('Cannot update this user: they have no institution set. Fix their profile in the database first (set institution_id or institution_other).');
+        } else {
+            showError('Failed to update admin status: ' + error.message);
+        }
     }
 }
 
