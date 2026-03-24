@@ -460,6 +460,8 @@ function renderUsers(users) {
             ? user.user_type.charAt(0).toUpperCase() + user.user_type.slice(1)
             : '<span class="text-muted">Not set</span>';
 
+        const escapedName = (user.name || user.email).replace(/'/g, "\\'");
+
         return `
                 <tr>
                     <td>${user.name || '<span class="text-muted">No name</span>'}</td>
@@ -468,10 +470,10 @@ function renderUsers(users) {
                     <td>${statusBadge}</td>
                     <td>
                         ${isAdmin
-                ? `<button class="btn btn-sm btn-warning" onclick="toggleUserAdmin(${user.id}, false, '${user.name || user.email}')">
+                ? `<button class="btn btn-sm btn-warning" onclick="toggleUserAdmin('${user.id}', false, '${escapedName}')">
                                 <i class="fas fa-user-minus me-1"></i>Remove Admin
                                </button>`
-                : `<button class="btn btn-sm btn-success" onclick="toggleUserAdmin(${user.id}, true, '${user.name || user.email}')">
+                : `<button class="btn btn-sm btn-success" onclick="toggleUserAdmin('${user.id}', true, '${escapedName}')">
                                 <i class="fas fa-user-shield me-1"></i>Make Admin
                                </button>`
             }
@@ -501,7 +503,7 @@ async function toggleUserAdmin(userId, makeAdmin, userName) {
     const action = makeAdmin ? 'grant' : 'remove';
     const actionText = makeAdmin ? 'Make Admin' : 'Remove Admin';
 
-    const confirmed = await showConfirm(
+    const confirmed = await showConfirmModal(
         `Are you sure you want to ${action} admin privileges ${makeAdmin ? 'to' : 'from'} ${userName}?`,
         actionText
     );

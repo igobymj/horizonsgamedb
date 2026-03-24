@@ -13,7 +13,8 @@
             home: { title: 'Home', url: 'index.html', icon: 'fas fa-home', auth: false },
             upload: { title: 'Upload', url: 'upload.html', icon: 'fas fa-upload', auth: true },
             profile: { title: 'Profile', url: 'profile.html', icon: 'fas fa-user-edit', auth: true },
-            admin: { title: 'Admin', url: 'admin.html', icon: 'fas fa-tools', auth: 'admin' }
+            admin: { title: 'Admin', url: 'admin.html', icon: 'fas fa-tools', auth: 'admin' },
+            metrics: { title: 'Metrics', url: 'metrics.html', icon: 'fas fa-chart-line', auth: 'admin' }
         }
     };
 
@@ -158,6 +159,7 @@
             'upload.html': 'upload',
             'profile.html': 'profile',
             'admin.html': 'admin',
+            'metrics.html': 'metrics',
             'login.html': 'login'
         };
 
@@ -378,6 +380,9 @@
         Object.entries(NAV_CONFIG.pages).forEach(([key, page]) => {
             if (page.auth === true && !isAuthenticated) return;
             if (page.auth === 'admin' && !isAdmin) return;
+
+            // Only show metrics page in development mode
+            if (key === 'metrics' && (typeof IS_DEV === 'undefined' || !IS_DEV)) return;
 
             const link = document.createElement('a');
             link.href = addEnvParams(page.url);  // Preserve environment params
